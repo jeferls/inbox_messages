@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inbox (SQLite)</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Inbox</h1>
+      <div class="actions">
+        <input id="searchInput" type="search" placeholder="Buscar..." />
+        <label class="inline"><input id="unreadOnly" type="checkbox" /> Somente não lidos</label>
+        <button id="refreshBtn">Atualizar</button>
+        <button id="clearBtn" class="danger">Limpar tudo</button>
+      </div>
+    </header>
+    <main>
+      <aside id="list">
+        <div id="listHeader">
+          <span id="totalSpan">0 emails</span>
+          <div class="pager">
+            <button id="prevBtn">Anterior</button>
+            <span id="pageInfo">1/1</span>
+            <button id="nextBtn">Próxima</button>
+          </div>
+        </div>
+      </aside>
+      <section id="detail">
+        <div id="emptyDetail">Selecione um email para visualizar</div>
+        <article id="detailCard" hidden>
+          <h2 id="detailTitle"></h2>
+          <div class="meta">
+            <span id="detailRecipient"></span>
+            <span id="detailDate"></span>
+          </div>
+          <div id="detailBody" class="email-body"></div>
+        </article>
+      </section>
+    </main>
+    <footer>
+      <small>API em <code>/api</code> • Atualiza automático a cada 5s</small>
+    </footer>
+    <!-- Sanitizer for safe HTML rendering -->
+    <script src="https://unpkg.com/dompurify@3.0.5/dist/purify.min.js" integrity="sha384-TN7u4m2VJsk4BR0W4qJ8wC2X6sD8pT6xv+ZkLkZL6kq9fN2nq7ZsQ5p3m2m8z9wY" crossorigin="anonymous"></script>
+    <script src="/app.js?v=3"></script>
+  </body>
+  </html>

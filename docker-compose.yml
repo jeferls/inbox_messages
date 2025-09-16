@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  inbox_messages:
+    container_name: svc-inbox_messages
+    build: .
+    image: inbox:latest
+    environment:
+      - NODE_ENV=production
+      - PORT=80
+      # Persistência do SQLite fora do container
+      - DB_PATH=/data/data.db
+      # Ajuste conforme necessário para o front que acessará
+      - ALLOWED_ORIGIN=*
+    ports:
+      - "8115:80"
+    volumes:
+      - inbox_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - greenn-network
+
+volumes:
+  inbox_data:
+    driver: local
+
+networks:
+  greenn-network:
+    external: true
