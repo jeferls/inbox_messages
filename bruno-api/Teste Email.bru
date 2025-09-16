@@ -1,0 +1,29 @@
+meta {
+  name: Teste Email
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8115/api/send
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "to_address": "teste@greenn.com.br",
+    "title": "temos mais uma atualização para você: Teste Email",
+    "body_email": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset='UTF-8'>\n    <style>\n      body { font-family: Arial, sans-serif; background-color: #f4f8fb; color: #333; padding: 20px; }\n      .container { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; margin: auto; padding: 20px; text-align: center; }\n      .header { color: #2e7d32; font-size: 22px; font-weight: bold; margin-bottom: 20px; }\n      .btn { display: inline-block; padding: 12px 24px; margin-top: 20px; background-color: #2e7d32; color: #fff; border-radius: 8px; text-decoration: none; font-weight: bold; }\n      .btn:hover { background-color: #256528; }\n      img { max-width: 100%; border-radius: 12px; margin-bottom: 20px; }\n      .footer { margin-top: 20px; font-size: 14px; color: #777; }\n    </style>\n  </head>\n  <body>\n    <div class='container'>\n      <img src='https://picsum.photos/600/200' alt='Imagem ilustrativa'>\n      <div class='header'>Temos novidades para você 🚀</div>\n      <p>Olá! Chegou uma atualização importante.<br>Clique no botão abaixo para acessar:</p>\n      <a href='https://google.com.br' class='btn'>Acessar Agora</a>\n      <div class='footer'>Caso tenha recebido este email, me avise no Discord: Teste#2127</div>\n    </div>\n  </body>\n</html>"
+  }
+  
+}
+
+settings {
+  encodeUrl: false
+}
