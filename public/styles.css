@@ -52,3 +52,12 @@ footer { height: 48px; display: flex; align-items: center; padding: 0 16px; bord
   main { grid-template-columns: 1fr; }
   aside#list { height: 45vh; border-right: none; border-bottom: 1px solid #e5e7eb; }
 }
+
+/* Modal para logs */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 1000; }
+.modal-card { width: min(100%, 1000px); background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; display: flex; flex-direction: column; max-height: 80vh; }
+.modal-header { display: flex; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #e5e7eb; }
+.modal-header .spacer { flex: 1; }
+.logs-content { margin: 0; padding: 12px; background: #0b1020; color: #cbd5e1; overflow: auto; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; white-space: pre-wrap; word-wrap: break-word; height: 60vh; }
+/* Garante que elementos com atributo hidden não exibam */
+[hidden] { display: none !important; }

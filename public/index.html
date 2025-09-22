@@ -14,6 +14,7 @@
         <label class="inline"><input id="unreadOnly" type="checkbox" /> Somente não lidos</label>
         <button id="refreshBtn">Atualizar</button>
         <button id="clearBtn" class="danger">Limpar tudo</button>
+        <button id="logsBtn">Logs</button>
       </div>
     </header>
     <main>
@@ -42,8 +43,21 @@
     <footer>
       <small>API em <code>/api</code> • Atualiza automático a cada 5s</small>
     </footer>
+    <!-- Logs modal -->
+    <div id="logsModal" class="modal" hidden>
+      <div class="modal-card">
+        <div class="modal-header">
+          <strong>Logs do servidor</strong>
+          <div class="spacer"></div>
+          <button id="logsRefreshBtn">Atualizar</button>
+          <button id="logsClearBtn" class="danger">Apagar logs</button>
+          <button id="logsCloseBtn">Fechar</button>
+        </div>
+        <pre id="logsContent" class="logs-content">Carregando...</pre>
+      </div>
+    </div>
     <!-- Sanitizer for safe HTML rendering -->
     <script src="https://unpkg.com/dompurify@3.0.5/dist/purify.min.js" integrity="sha384-TN7u4m2VJsk4BR0W4qJ8wC2X6sD8pT6xv+ZkLkZL6kq9fN2nq7ZsQ5p3m2m8z9wY" crossorigin="anonymous"></script>
-    <script src="/app.js?v=3"></script>
+    <script src="/app.js?v=4"></script>
   </body>
   </html>

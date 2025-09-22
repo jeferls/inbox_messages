@@ -71,6 +71,15 @@ export async function deleteAllEmails() {
   await run(`DELETE FROM emails`);
 }
 
+export async function deleteEmailById(id) {
+  await run(`DELETE FROM emails WHERE id = ?`, [id]);
+}
+
+export async function appendEmailBody(id, chunk) {
+  // Concatena chunk no corpo em atualização incremental
+  await run(`UPDATE emails SET body = COALESCE(body, '') || ? WHERE id = ?`, [chunk, id]);
+}
+
 export async function queryEmails({ limit = 50, offset = 0, search, unread = false }) {
   const where = [];
   const params = [];
@@ -93,4 +102,3 @@ export async function queryEmails({ limit = 50, offset = 0, search, unread = fal
 
   return { items, total: totalRow?.count ?? 0 };
 }
-

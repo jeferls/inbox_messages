@@ -1,6 +1,7 @@
 const listEl = document.getElementById('list');
 const refreshBtn = document.getElementById('refreshBtn');
 const clearBtn = document.getElementById('clearBtn');
+const logsBtn = document.getElementById('logsBtn');
 const searchInput = document.getElementById('searchInput');
 const unreadOnly = document.getElementById('unreadOnly');
 const prevBtn = document.getElementById('prevBtn');
@@ -14,6 +15,13 @@ const detailTitle = document.getElementById('detailTitle');
 const detailRecipient = document.getElementById('detailRecipient');
 const detailDate = document.getElementById('detailDate');
 const detailBody = document.getElementById('detailBody');
+
+// Logs modal elements
+const logsModal = document.getElementById('logsModal');
+const logsContent = document.getElementById('logsContent');
+const logsRefreshBtn = document.getElementById('logsRefreshBtn');
+const logsClearBtn = document.getElementById('logsClearBtn');
+const logsCloseBtn = document.getElementById('logsCloseBtn');
 
 const state = {
   page: 0,
@@ -132,6 +140,9 @@ function escapeHtml(str) {
 
 refreshBtn.addEventListener('click', load);
 clearBtn.addEventListener('click', clearAll);
+logsBtn.addEventListener('click', () => {
+  if (logsModal.hidden) openLogs(); else closeLogs();
+});
 prevBtn.addEventListener('click', () => { if (state.page > 0) { state.page -= 1; load(); } });
 nextBtn.addEventListener('click', () => { state.page += 1; load(); });
 searchInput.addEventListener('input', debounce(() => { state.page = 0; state.search = searchInput.value.trim(); load(); }, 250));
@@ -215,3 +226,45 @@ function enhanceEmailBody(container) {
     }
   } catch {}
 }
+
+// Logs UI
+async function openLogs() {
+  logsModal.hidden = false;
+  await refreshLogs();
+}
+
+function closeLogs() {
+  logsModal.hidden = true;
+}
+
+async function refreshLogs() {
+  try {
+    logsContent.textContent = 'Carregando...';
+    const res = await fetch('/api/logs?bytes=262144'); // 256KB tail
+    const text = await res.text();
+    logsContent.textContent = text || '(vazio)';
+  } catch (e) {
+    logsContent.textContent = 'Falha ao carregar logs';
+  }
+}
+
+async function clearLogs() {
+  if (!confirm('Deseja apagar o arquivo de logs?')) return;
+  const res = await fetch('/api/logs', { method: 'DELETE' });
+  if (!res.ok) return alert('Falha ao apagar logs');
+  await refreshLogs();
+}
+
+logsRefreshBtn?.addEventListener('click', refreshLogs);
+logsClearBtn?.addEventListener('click', clearLogs);
+logsCloseBtn?.addEventListener('click', closeLogs);
+
+// Fecha ao clicar fora do card
+logsModal?.addEventListener('click', (e) => {
+  if (e.target === logsModal) closeLogs();
+});
+
+// Fecha com ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !logsModal.hidden) closeLogs();
+});
