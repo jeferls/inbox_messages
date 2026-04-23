@@ -7,6 +7,8 @@ input[type="search"] { padding: 6px 10px; border: 1px solid #d1d5db; border-radi
 label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: #374151; }
 button { padding: 6px 10px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; }
 button:hover { background: #f3f4f6; }
+.button-link { display: inline-flex; align-items: center; padding: 6px 10px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; color: #111827; text-decoration: none; font-size: 14px; }
+.button-link:hover { background: #f3f4f6; }
 button.danger { border-color: #ef4444; color: #b91c1c; }
 button.danger:hover { background: #fee2e2; }
 
@@ -61,3 +63,24 @@ footer { height: 48px; display: flex; align-items: center; padding: 0 16px; bord
 .logs-content { margin: 0; padding: 12px; background: #0b1020; color: #cbd5e1; overflow: auto; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; white-space: pre-wrap; word-wrap: break-word; height: 60vh; }
 /* Garante que elementos com atributo hidden não exibam */
 [hidden] { display: none !important; }
+
+/* Tela de lotes */
+.page-shell { max-width: 1200px; margin: 0 auto; padding: 16px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.page-actions { display: flex; align-items: center; gap: 8px; }
+.lotes-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; min-height: 70vh; }
+.panel { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: auto; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; background: #fff; z-index: 1; }
+.lote-item { border: 1px solid #e5e7eb; border-radius: 8px; margin: 10px; padding: 10px; cursor: pointer; }
+.lote-item:hover { background: #f9fafb; }
+.lote-item.selected { border-color: #93c5fd; background: #eff6ff; }
+.lote-main { font-weight: 600; }
+.lote-sub { color: #6b7280; font-size: 13px; margin-top: 4px; }
+.detail-wrap { padding: 14px; }
+.detail-actions { margin-top: 10px; display: flex; gap: 8px; }
+.json-box { margin-top: 12px; background: #0b1020; color: #cbd5e1; border-radius: 8px; padding: 12px; overflow: auto; max-height: 60vh; font-size: 12px; }
+.status-line { color: #6b7280; font-size: 13px; }
+
+@media (max-width: 900px) {
+  .lotes-grid { grid-template-columns: 1fr; }
+}

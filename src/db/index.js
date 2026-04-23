@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3';
 import { DB_PATH } from '../config/env.js';
+import crypto from 'node:crypto';
 
 let db;
 
@@ -14,6 +15,16 @@ export async function dbInit() {
       recipient TEXT NOT NULL,
       body TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS liquidacoes_antecipacao (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      num_ctrl_cip TEXT NOT NULL UNIQUE,
+      payload_requisicao TEXT NOT NULL,
+      payload_processamento TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
@@ -44,6 +55,15 @@ function all(sql, params = []) {
       resolve(rows);
     });
   });
+}
+
+function randomDigits(length) {
+  const bytes = crypto.randomBytes(length);
+  let output = '';
+  for (let i = 0; i < length; i += 1) {
+    output += String(bytes[i] % 10);
+  }
+  return output;
 }
 
 export async function insertEmail({ title, recipient, body }) {
@@ -101,4 +121,66 @@ export async function queryEmails({ limit = 50, offset = 0, search, unread = fal
   );
 
   return { items, total: totalRow?.count ?? 0 };
+}
+
+export async function createLiquidacaoAntecipacao({ payloadRequisicao, payloadProcessamento }) {
+  const maxRetries = 10;
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    const numCtrlCip = randomDigits(20);
+    try {
+      await run(
+        `INSERT INTO liquidacoes_antecipacao (num_ctrl_cip, payload_requisicao, payload_processamento) VALUES (?, ?, ?)`,
+        [numCtrlCip, JSON.stringify(payloadRequisicao), JSON.stringify(payloadProcessamento)]
+      );
+      return { numCtrlCip };
+    } catch (error) {
+      if (error?.code !== 'SQLITE_CONSTRAINT') {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error('Falha ao gerar numCtrlCip unico');
+}
+
+export async function getLiquidacaoAntecipacaoProcessamentoByNumCtrlCip(numCtrlCip) {
+  const row = await get(
+    `SELECT payload_processamento FROM liquidacoes_antecipacao WHERE num_ctrl_cip = ?`,
+    [numCtrlCip]
+  );
+  if (!row) return null;
+
+  try {
+    return JSON.parse(row.payload_processamento);
+  } catch {
+    return null;
+  }
+}
+
+export async function queryLiquidacoesAntecipacao({ limit = 20, offset = 0 }) {
+  const totalRow = await get(`SELECT COUNT(*) as count FROM liquidacoes_antecipacao`);
+  const rows = await all(
+    `SELECT num_ctrl_cip, created_at FROM liquidacoes_antecipacao
+     ORDER BY datetime(created_at) DESC, id DESC
+     LIMIT ? OFFSET ?`,
+    [Number(limit), Number(offset)]
+  );
+
+  const items = rows.map((row) => ({
+    numCtrlCip: row.num_ctrl_cip,
+    createdAt: row.created_at,
+  }));
+
+  return {
+    items,
+    total: totalRow?.count ?? 0,
+  };
+}
+
+export async function deleteLiquidacaoAntecipacaoByNumCtrlCip(numCtrlCip) {
+  const result = await run(
+    `DELETE FROM liquidacoes_antecipacao WHERE num_ctrl_cip = ?`,
+    [numCtrlCip]
+  );
+  return (result?.changes ?? 0) > 0;
 }

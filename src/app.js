@@ -8,6 +8,7 @@ import { dbInit } from './db/index.js';
 import emailsRoutes from './routes/emails.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import logsRoutes from './routes/logs.routes.js';
+import liquidacoesRoutes from './routes/liquidacoes.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,6 +73,7 @@ await dbInit();
 app.use('/api', healthRoutes);
 app.use('/api', emailsRoutes);
 app.use('/api', logsRoutes);
+app.use('/api', liquidacoesRoutes);
 
 // Tratativa explícita para payload grande: retorna JSON amigável
 app.use((err, req, res, next) => {

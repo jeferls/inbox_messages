@@ -99,6 +99,47 @@ API HTTP
     curl -X DELETE http://localhost:8115/api/emails
     ```
 
+- Criar lote de liquidações de antecipação
+  - `POST /api/slc/v1/liquidacoes-antecipacao`
+  - Corpo JSON: objeto com os dados do lote, incluindo `grupoSLC0912Centrlz.grupoSLC0912PontoVenda` (até 1000 itens)
+  - Resposta:
+    ```json
+    { "numCtrlCip": "12345678901234567890" }
+    ```
+
+- Consultar processamento do lote
+  - `GET /api/slc/v1/liquidacoes/:numCtrlCip/processamento`
+  - Resposta exemplo:
+    ```json
+    {
+      "situacao": "F",
+      "dtHrUltAlt": "2022-01-05T10:00:00Z",
+      "grupoPontoVendaActo": [
+        {
+          "numCtrlCreddrPontoVenda": "12345678901234567890",
+          "nuLiquid": "123456789012345678901"
+        }
+      ],
+      "grupoPontoVendaRecsdo": [
+        {
+          "numCtrlCreddrPontoVenda": "12345678901234567891",
+          "atrbtErr": "GrupoPontoVenda.DtPgto",
+          "codErro": "ESLC0128"
+        }
+      ]
+    }
+    ```
+
+- Listar lotes de liquidação
+  - `GET /api/slc/v1/liquidacoes-antecipacao?limit=20&page=0`
+
+- Deletar lote de liquidação
+  - `DELETE /api/slc/v1/liquidacoes/:numCtrlCip`
+
+- Tela web de lotes
+  - Acesse `http://localhost:8115/lotes.html`
+  - Permite listar lotes, visualizar processamento e deletar lote
+
 Persistência (SQLite)
 - Em Docker, o banco é salvo no volume `inbox_data` montado em `/data` dentro do container.
 - Localmente (sem Docker), o arquivo padrão é `data.db` na raiz do projeto.

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lotes de Liquidação</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="page-header">
+        <h1>Lotes de Liquidação</h1>
+        <div class="page-actions">
+          <a class="button-link" href="/">Voltar para Inbox</a>
+          <button id="refreshLotesBtn">Atualizar</button>
+        </div>
+      </div>
+
+      <div class="lotes-grid">
+        <section class="panel">
+          <div class="panel-header">
+            <span id="lotesTotal">0 lotes</span>
+            <div class="pager">
+              <button id="prevLotesBtn">Anterior</button>
+              <span id="lotesPageInfo">1/1</span>
+              <button id="nextLotesBtn">Próxima</button>
+            </div>
+          </div>
+          <div id="lotesList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <strong>Processamento do lote</strong>
+          </div>
+          <div id="loteDetail" class="detail-wrap">
+            <div class="empty">Selecione um lote para visualizar</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="/lotes.js?v=1"></script>
+  </body>
+  </html>
