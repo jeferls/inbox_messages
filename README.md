@@ -133,12 +133,25 @@ API HTTP
 - Listar lotes de liquidação
   - `GET /api/slc/v1/liquidacoes-antecipacao?limit=20&page=0`
 
+- Apagar todos os lotes
+  - `DELETE /api/slc/v1/liquidacoes-antecipacao`
+  - Resposta: `{ "ok": true, "deleted": <número de linhas removidas> }`
+
+- Obter lote completo (requisição + processamento)
+  - `GET /api/slc/v1/liquidacoes/:numCtrlCip`
+  - Resposta: `{ "numCtrlCip", "createdAt", "requisicao", "processamento" }`
+
+- Atualizar lote salvo
+  - `PUT /api/slc/v1/liquidacoes/:numCtrlCip`
+  - Corpo JSON: envie `requisicao` e/ou `processamento` (ao menos um)
+  - Se `requisicao` for enviada, aplica as mesmas regras de validação do POST (1 a 1000 pontos de venda)
+
 - Deletar lote de liquidação
   - `DELETE /api/slc/v1/liquidacoes/:numCtrlCip`
 
 - Tela web de lotes
   - Acesse `http://localhost:8115/lotes.html`
-  - Permite listar lotes, visualizar processamento e deletar lote
+  - Permite listar lotes, editar requisição e processamento, deletar um lote ou limpar todos os lotes
 
 Persistência (SQLite)
 - Em Docker, o banco é salvo no volume `inbox_data` montado em `/data` dentro do container.

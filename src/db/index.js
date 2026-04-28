@@ -143,6 +143,31 @@ export async function createLiquidacaoAntecipacao({ payloadRequisicao, payloadPr
   throw new Error('Falha ao gerar numCtrlCip unico');
 }
 
+function parseJsonOrNull(text) {
+  if (text == null || text === '') return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+export async function getLiquidacaoAntecipacaoByNumCtrlCip(numCtrlCip) {
+  const row = await get(
+    `SELECT num_ctrl_cip, created_at, payload_requisicao, payload_processamento
+     FROM liquidacoes_antecipacao WHERE num_ctrl_cip = ?`,
+    [numCtrlCip]
+  );
+  if (!row) return null;
+
+  return {
+    numCtrlCip: row.num_ctrl_cip,
+    createdAt: row.created_at,
+    requisicao: parseJsonOrNull(row.payload_requisicao),
+    processamento: parseJsonOrNull(row.payload_processamento),
+  };
+}
+
 export async function getLiquidacaoAntecipacaoProcessamentoByNumCtrlCip(numCtrlCip) {
   const row = await get(
     `SELECT payload_processamento FROM liquidacoes_antecipacao WHERE num_ctrl_cip = ?`,
@@ -150,11 +175,29 @@ export async function getLiquidacaoAntecipacaoProcessamentoByNumCtrlCip(numCtrlC
   );
   if (!row) return null;
 
-  try {
-    return JSON.parse(row.payload_processamento);
-  } catch {
-    return null;
-  }
+  return parseJsonOrNull(row.payload_processamento);
+}
+
+export async function updateLiquidacaoAntecipacaoByNumCtrlCip(numCtrlCip, { payloadRequisicao, payloadProcessamento }) {
+  const existing = await get(
+    `SELECT payload_requisicao, payload_processamento FROM liquidacoes_antecipacao WHERE num_ctrl_cip = ?`,
+    [numCtrlCip]
+  );
+  if (!existing) return null;
+
+  const nextRequisicao =
+    payloadRequisicao !== undefined ? JSON.stringify(payloadRequisicao) : existing.payload_requisicao;
+  const nextProcessamento =
+    payloadProcessamento !== undefined ? JSON.stringify(payloadProcessamento) : existing.payload_processamento;
+
+  await run(
+    `UPDATE liquidacoes_antecipacao
+     SET payload_requisicao = ?, payload_processamento = ?
+     WHERE num_ctrl_cip = ?`,
+    [nextRequisicao, nextProcessamento, numCtrlCip]
+  );
+
+  return getLiquidacaoAntecipacaoByNumCtrlCip(numCtrlCip);
 }
 
 export async function queryLiquidacoesAntecipacao({ limit = 20, offset = 0 }) {
@@ -183,4 +226,9 @@ export async function deleteLiquidacaoAntecipacaoByNumCtrlCip(numCtrlCip) {
     [numCtrlCip]
   );
   return (result?.changes ?? 0) > 0;
+}
+
+export async function deleteAllLiquidacoesAntecipacao() {
+  const result = await run(`DELETE FROM liquidacoes_antecipacao`);
+  return result?.changes ?? 0;
 }

@@ -79,6 +79,8 @@ footer { height: 48px; display: flex; align-items: center; padding: 0 16px; bord
 .detail-wrap { padding: 14px; }
 .detail-actions { margin-top: 10px; display: flex; gap: 8px; }
 .json-box { margin-top: 12px; background: #0b1020; color: #cbd5e1; border-radius: 8px; padding: 12px; overflow: auto; max-height: 60vh; font-size: 12px; }
+.json-edit { width: 100%; min-height: 200px; max-height: 40vh; font-family: ui-monospace, monospace; font-size: 12px; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; }
+.json-label { display: block; font-weight: 600; margin: 12px 0 6px; }
 .status-line { color: #6b7280; font-size: 13px; }
 
 @media (max-width: 900px) {

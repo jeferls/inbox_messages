@@ -58,6 +58,33 @@ test('emails flow: create, list, get (marks read), delete-all', async () => {
   assert.equal(list2.total, 0);
 });
 
+test('liquidacoes: delete all lots', async () => {
+  const minimalPayload = {
+    grupoSLC0912Centrlz: {
+      grupoSLC0912PontoVenda: [{ numCtrlCreddrPontoVenda: '99999999901234567890' }],
+    },
+  };
+
+  const createRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes-antecipacao`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(minimalPayload),
+  });
+  assert.equal(createRes.status, 201);
+
+  const delAllRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes-antecipacao`, {
+    method: 'DELETE',
+  });
+  assert.equal(delAllRes.status, 200);
+  const delBody = await delAllRes.json();
+  assert.equal(delBody.ok, true);
+  assert.ok(Number(delBody.deleted) >= 1);
+
+  const listRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes-antecipacao?limit=50`);
+  const list = await listRes.json();
+  assert.equal(list.total, 0);
+});
+
 test('liquidacoes antecipacao flow: create lot and get processing', async () => {
   const grupoSLC0912PontoVenda = Array.from({ length: 1000 }, (_, idx) => ({
     numCtrlCreddrPontoVenda: `12345678901234567${String(idx).padStart(3, '0')}`,
@@ -126,6 +153,29 @@ test('liquidacoes antecipacao flow: create lot and get processing', async () => 
   const list = await listRes.json();
   assert.ok(Array.isArray(list.items));
   assert.ok(list.items.some((item) => item.numCtrlCip === created.numCtrlCip));
+
+  const getLoteRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes/${created.numCtrlCip}`);
+  assert.equal(getLoteRes.status, 200);
+  const loteFull = await getLoteRes.json();
+  assert.equal(loteFull.numCtrlCip, created.numCtrlCip);
+  assert.equal(loteFull.requisicao.cnpjBaseCreddr, '12345678');
+  assert.equal(loteFull.processamento.situacao, 'F');
+
+  const processamentoEditado = { ...processamento, situacao: 'P', observacaoEdicao: 'teste-integracao' };
+  const putRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes/${created.numCtrlCip}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ processamento: processamentoEditado }),
+  });
+  assert.equal(putRes.status, 200);
+  const atualizado = await putRes.json();
+  assert.equal(atualizado.processamento.situacao, 'P');
+  assert.equal(atualizado.processamento.observacaoEdicao, 'teste-integracao');
+
+  const getProc2 = await fetch(`${baseURL}/api/slc/v1/liquidacoes/${created.numCtrlCip}/processamento`);
+  assert.equal(getProc2.status, 200);
+  const proc2 = await getProc2.json();
+  assert.equal(proc2.situacao, 'P');
 
   const deleteRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes/${created.numCtrlCip}`, {
     method: 'DELETE',

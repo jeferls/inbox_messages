@@ -3,6 +3,7 @@ const loteDetail = document.getElementById('loteDetail');
 const lotesTotal = document.getElementById('lotesTotal');
 const lotesPageInfo = document.getElementById('lotesPageInfo');
 const refreshLotesBtn = document.getElementById('refreshLotesBtn');
+const clearAllLotesBtn = document.getElementById('clearAllLotesBtn');
 const prevLotesBtn = document.getElementById('prevLotesBtn');
 const nextLotesBtn = document.getElementById('nextLotesBtn');
 
@@ -22,9 +23,22 @@ async function fetchLotes() {
   return res.json();
 }
 
-async function fetchProcessamento(numCtrlCip) {
-  const res = await fetch(`/api/slc/v1/liquidacoes/${encodeURIComponent(numCtrlCip)}/processamento`);
-  if (!res.ok) throw new Error('Falha ao buscar processamento');
+async function fetchLoteCompleto(numCtrlCip) {
+  const res = await fetch(`/api/slc/v1/liquidacoes/${encodeURIComponent(numCtrlCip)}`);
+  if (!res.ok) throw new Error('Falha ao buscar lote');
+  return res.json();
+}
+
+async function saveLote(numCtrlCip, body) {
+  const res = await fetch(`/api/slc/v1/liquidacoes/${encodeURIComponent(numCtrlCip)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errBody = await safeJson(res);
+    throw new Error(errBody?.error || 'Falha ao salvar lote');
+  }
   return res.json();
 }
 
@@ -36,6 +50,15 @@ async function deleteLote(numCtrlCip) {
     const body = await safeJson(res);
     throw new Error(body?.error || 'Falha ao deletar lote');
   }
+}
+
+async function deleteAllLotes() {
+  const res = await fetch('/api/slc/v1/liquidacoes-antecipacao', { method: 'DELETE' });
+  if (!res.ok) {
+    const body = await safeJson(res);
+    throw new Error(body?.error || 'Falha ao apagar lotes');
+  }
+  return res.json();
 }
 
 function renderLotes(items) {
@@ -63,26 +86,67 @@ function renderLotes(items) {
 
 async function openLote(numCtrlCip) {
   state.selectedNumCtrlCip = numCtrlCip;
-  loteDetail.innerHTML = '<div class="empty">Carregando processamento...</div>';
+  loteDetail.innerHTML = '<div class="empty">Carregando lote...</div>';
   try {
-    const processamento = await fetchProcessamento(numCtrlCip);
+    const lote = await fetchLoteCompleto(numCtrlCip);
+    const processamento = lote.processamento || {};
+    const requisicao = lote.requisicao || {};
     const acto = Array.isArray(processamento.grupoPontoVendaActo)
       ? processamento.grupoPontoVendaActo.length
       : 0;
     const recsdo = Array.isArray(processamento.grupoPontoVendaRecsdo)
       ? processamento.grupoPontoVendaRecsdo.length
       : 0;
+    const jsonRequisicao = JSON.stringify(requisicao, null, 2);
+    const jsonProcessamento = JSON.stringify(processamento, null, 2);
 
     loteDetail.innerHTML = `
       <div><strong>numCtrlCip:</strong> ${escapeHtml(numCtrlCip)}</div>
+      <div class="status-line">Criado em: ${escapeHtml(fmtDate(lote.createdAt))}</div>
       <div class="status-line">Situação: ${escapeHtml(processamento.situacao || '-')} • Acto: ${acto} • Recsdo: ${recsdo}</div>
+      <label class="json-label" for="taRequisicao">Requisição (payload salvo)</label>
+      <textarea id="taRequisicao" class="json-edit" spellcheck="false"></textarea>
+      <label class="json-label" for="taProcessamento">Processamento</label>
+      <textarea id="taProcessamento" class="json-edit" spellcheck="false"></textarea>
       <div class="detail-actions">
-        <button id="deleteLoteBtn" class="danger">Deletar lote</button>
+        <button id="saveLoteBtn" type="button">Salvar alterações</button>
+        <button id="deleteLoteBtn" class="danger" type="button">Deletar lote</button>
       </div>
-      <pre class="json-box">${escapeHtml(JSON.stringify(processamento, null, 2))}</pre>
     `;
 
+    const saveBtn = document.getElementById('saveLoteBtn');
     const deleteBtn = document.getElementById('deleteLoteBtn');
+    const taReq = document.getElementById('taRequisicao');
+    const taProc = document.getElementById('taProcessamento');
+    taReq.value = jsonRequisicao;
+    taProc.value = jsonProcessamento;
+
+    saveBtn.addEventListener('click', async () => {
+      let reqParsed;
+      let procParsed;
+      try {
+        reqParsed = JSON.parse(taReq.value);
+      } catch {
+        alert('JSON inválido no campo Requisição');
+        return;
+      }
+      try {
+        procParsed = JSON.parse(taProc.value);
+      } catch {
+        alert('JSON inválido no campo Processamento');
+        return;
+      }
+      saveBtn.disabled = true;
+      try {
+        await saveLote(numCtrlCip, { requisicao: reqParsed, processamento: procParsed });
+        alert('Lote atualizado com sucesso');
+        await openLote(numCtrlCip);
+      } catch (error) {
+        alert(error.message || 'Falha ao salvar');
+        saveBtn.disabled = false;
+      }
+    });
+
     deleteBtn.addEventListener('click', async () => {
       if (!confirm(`Deseja realmente deletar o lote ${numCtrlCip}?`)) return;
       deleteBtn.disabled = true;
@@ -152,6 +216,21 @@ async function safeJson(res) {
 }
 
 refreshLotesBtn.addEventListener('click', () => load());
+clearAllLotesBtn.addEventListener('click', async () => {
+  if (!confirm('Tem certeza que deseja apagar todos os lotes? Esta ação não pode ser desfeita.')) return;
+  clearAllLotesBtn.disabled = true;
+  try {
+    const data = await deleteAllLotes();
+    state.selectedNumCtrlCip = null;
+    loteDetail.innerHTML = '<div class="empty">Todos os lotes foram removidos</div>';
+    await load();
+    alert(data.deleted != null ? `Removidos ${data.deleted} lote(s).` : 'Lotes removidos.');
+  } catch (error) {
+    alert(error.message || 'Falha ao apagar lotes');
+  } finally {
+    clearAllLotesBtn.disabled = false;
+  }
+});
 prevLotesBtn.addEventListener('click', () => {
   if (state.page > 0) {
     state.page -= 1;
