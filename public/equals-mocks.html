@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Equals API Mock</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+      .tab { padding: 8px 16px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
+      .tab:hover { background: #f3f4f6; }
+      .tab.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
+      .config-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 13px; color: #475569; line-height: 1.6; }
+      .config-info code { background: #e2e8f0; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+      .txn-item { border: 1px solid #e5e7eb; border-radius: 8px; margin: 10px 0; padding: 12px; }
+      .txn-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; color: #6b7280; }
+      .txn-count-badge { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+      .panel-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+      .updated-at { font-size: 12px; color: #9ca3af; }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="page-header">
+        <h1>Equals API Mock</h1>
+        <div class="page-actions">
+          <a class="button-link" href="/">Voltar para Inbox</a>
+        </div>
+      </div>
+
+      <div class="config-info" style="margin-bottom:16px">
+        Configure o <code>EQUALS_API_BASE_URL=http://localhost:8115/equals-api</code> no <code>.env.dev</code> do greenn-back para usar este mock.
+        A autenticação Basic Auth é aceita sem validação de credenciais.
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="adquirentes">Adquirentes</button>
+        <button class="tab" data-tab="bandeiras">Bandeiras</button>
+        <button class="tab" data-tab="formas-de-pagamento">Formas de Pagamento</button>
+        <button class="tab" data-tab="meios-de-captura">Meios de Captura</button>
+        <button class="tab" data-tab="transacoes">Transações Recebidas</button>
+      </div>
+
+      <!-- Adquirentes -->
+      <div id="panel-adquirentes" class="tab-panel active">
+        <div class="config-info">
+          <strong>Endpoint:</strong> <code>GET /equals-api/adquirentes</code><br>
+          <strong>Formato:</strong> array de <code>{ "id": number, "nome": string }</code><br>
+          <strong>Gateways mapeados:</strong> Pagarme, Cielo, Rede, PayPal, Pix, Ebanx, Stripe, Iugu, MercadoPago, Asaas, Dlocal, Worldpay, Efi<br>
+          O campo <code>nome</code> é normalizado (minúsculo, sem pontuação) para comparação com o gateway da venda.
+        </div>
+        <div class="panel-actions">
+          <button id="save-adquirentes">Salvar</button>
+          <button id="reset-adquirentes">Restaurar padrão</button>
+          <span id="status-adquirentes" class="status-line"></span>
+        </div>
+        <textarea id="json-adquirentes" class="json-edit" rows="20" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Bandeiras -->
+      <div id="panel-bandeiras" class="tab-panel">
+        <div class="config-info">
+          <strong>Endpoint:</strong> <code>GET /equals-api/bandeiras</code><br>
+          <strong>Formato:</strong> array de <code>{ "id": number, "nome": string }</code><br>
+          O campo <code>nome</code> é comparado (case-insensitive) com a meta <code>brand</code> da venda.
+        </div>
+        <div class="panel-actions">
+          <button id="save-bandeiras">Salvar</button>
+          <button id="reset-bandeiras">Restaurar padrão</button>
+          <span id="status-bandeiras" class="status-line"></span>
+        </div>
+        <textarea id="json-bandeiras" class="json-edit" rows="20" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Formas de Pagamento -->
+      <div id="panel-formas-de-pagamento" class="tab-panel">
+        <div class="config-info">
+          <strong>Endpoint:</strong> <code>GET /equals-api/formas-de-pagamento</code><br>
+          <strong>Formato:</strong> array de <code>{ "id": string, "descricao": string }</code><br>
+          <strong>Descrições esperadas:</strong> "Cartão de Crédito", "Pagamento Instantâneo", "Boleto Bancário", "Cartão de Débito"<br>
+          A correspondência é feita pelo campo <code>descricao</code> exato.
+        </div>
+        <div class="panel-actions">
+          <button id="save-formas-de-pagamento">Salvar</button>
+          <button id="reset-formas-de-pagamento">Restaurar padrão</button>
+          <span id="status-formas-de-pagamento" class="status-line"></span>
+        </div>
+        <textarea id="json-formas-de-pagamento" class="json-edit" rows="20" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Meios de Captura -->
+      <div id="panel-meios-de-captura" class="tab-panel">
+        <div class="config-info">
+          <strong>Endpoint:</strong> <code>GET /equals-api/meios-de-captura</code><br>
+          <strong>Formato:</strong> array de <code>{ "id": number, "nome": string }</code><br>
+          <strong>Obrigatório:</strong> deve existir um item com <code>nome</code> igual a <code>"e-commerce"</code> (case-insensitive) — é o meio de captura usado para todas as vendas online.
+        </div>
+        <div class="panel-actions">
+          <button id="save-meios-de-captura">Salvar</button>
+          <button id="reset-meios-de-captura">Restaurar padrão</button>
+          <span id="status-meios-de-captura" class="status-line"></span>
+        </div>
+        <textarea id="json-meios-de-captura" class="json-edit" rows="20" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Transações Recebidas -->
+      <div id="panel-transacoes" class="tab-panel">
+        <div class="config-info">
+          <strong>Endpoint:</strong> <code>POST /equals-api/transacoes</code><br>
+          Armazena os batches de transações enviados pelo greenn-back. Qualquer resposta JSON válida é retornada (o greenn-back ignora o retorno do POST).
+        </div>
+        <div class="panel-actions">
+          <button id="refresh-transacoes">Atualizar</button>
+          <button id="clear-transacoes" class="danger">Limpar todas</button>
+          <span id="txn-total" class="txn-count-badge">0</span>
+          <span id="status-transacoes" class="status-line"></span>
+        </div>
+        <div id="pager-transacoes" class="pager" style="margin-bottom:10px">
+          <button id="prev-transacoes">Anterior</button>
+          <span id="page-info-transacoes">1/1</span>
+          <button id="next-transacoes">Próxima</button>
+        </div>
+        <div id="transacoes-list"></div>
+      </div>
+    </div>
+
+    <script src="/equals-mocks.js?v=1"></script>
+  </body>
+</html>

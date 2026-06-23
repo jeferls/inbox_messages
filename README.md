@@ -153,6 +153,62 @@ API HTTP
   - Acesse `http://localhost:8115/lotes.html`
   - Permite listar lotes, editar requisição e processamento, deletar um lote ou limpar todos os lotes
 
+- Criar processo de receivables
+  - `POST /api/slc/v1/receivables`
+  - Corpo JSON: `processReference` e `receivables` (lista com ao menos 1 item)
+  - Gera `processKey` UUID e retorna payload no modelo de receivables com `createdAt`
+
+- Listar processos de receivables
+  - `GET /api/slc/v1/receivables?limit=20&page=0`
+
+- Obter processo de receivables
+  - `GET /api/slc/v1/receivables/:processKey`
+  - Resposta: `{ "processKey", "createdAt", "request", "response" }`
+
+- Atualizar processo de receivables
+  - `PUT /api/slc/v1/receivables/:processKey`
+  - Corpo JSON: `request` e/ou `response` (ao menos um)
+
+- Deletar processo de receivables
+  - `DELETE /api/slc/v1/receivables/:processKey`
+
+- Apagar todos os processos de receivables
+  - `DELETE /api/slc/v1/receivables`
+  - Resposta: `{ "ok": true, "deleted": <número de linhas removidas> }`
+
+- Tela web de receivables
+  - Acesse `http://localhost:8115/receivables.html`
+  - Permite listar, editar request/response, deletar um processo ou limpar todos
+
+Equals API Mock
+- Simula a API da Equals (https://apiequalsvendainterna.docs.apiary.io) localmente para testar o comando `equals:report-sales` do greenn-back sem depender da API real.
+
+- Configuração no greenn-back:
+  - Defina `EQUALS_API_BASE_URL=http://localhost:8115/equals-api` no `.env.dev`
+  - O mock aceita qualquer credencial Basic Auth (sem validação)
+
+- Endpoints simulados (montados em `/equals-api`):
+  - `GET /equals-api/adquirentes` — lista de adquirentes (Pagarme, Cielo, Rede, PayPal, etc.)
+  - `GET /equals-api/bandeiras` — lista de bandeiras (Visa, Mastercard, Amex, Elo, etc.)
+  - `GET /equals-api/formas-de-pagamento` — formas de pagamento (Cartão de Crédito, PIX, Boleto, Débito)
+  - `GET /equals-api/meios-de-captura` — meios de captura (e-commerce, POS, TEF, etc.)
+  - `POST /equals-api/transacoes` — recebe o batch de vendas e armazena para inspeção
+  - `GET /equals-api/transacoes` — retorna `{ "transacoes": [] }` (mock vazio)
+  - `GET /equals-api/transacoes/status` — retorna `{ "status": "ok", "processado": true }`
+
+- API de gerenciamento (montada em `/api/equals-mock`):
+  - `GET /api/equals-mock/config` — retorna todas as configurações de listas
+  - `GET /api/equals-mock/config/:key` — retorna uma configuração específica
+  - `PUT /api/equals-mock/config/:key` — atualiza uma lista (corpo: `{ "data": [...] }`)
+  - `POST /api/equals-mock/config/:key/reset` — restaura a lista ao padrão
+  - `GET /api/equals-mock/transactions` — lista transações recebidas (query: `limit`, `offset`)
+  - `DELETE /api/equals-mock/transactions` — limpa todas as transações recebidas
+
+- Tela web de edição dos mocks:
+  - Acesse `http://localhost:8115/equals-mocks.html`
+  - Permite editar as 4 listas (adquirentes, bandeiras, formas de pagamento, meios de captura) via textarea JSON
+  - Visualizar e limpar as transações recebidas com paginação
+
 Persistência (SQLite)
 - Em Docker, o banco é salvo no volume `inbox_data` montado em `/data` dentro do container.
 - Localmente (sem Docker), o arquivo padrão é `data.db` na raiz do projeto.

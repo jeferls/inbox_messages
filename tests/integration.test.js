@@ -21,6 +21,13 @@ test('GET /api/health', async () => {
   assert.equal(body.ok, true);
 });
 
+test('GET /holiday/check/:date', async () => {
+  const res = await fetch(`${baseURL}/holiday/check/2026-05-01`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.isHoliday, false);
+});
+
 test('emails flow: create, list, get (marks read), delete-all', async () => {
   // Create
   const createRes = await fetch(`${baseURL}/api/emails`, {
@@ -186,6 +193,231 @@ test('liquidacoes antecipacao flow: create lot and get processing', async () => 
 
   const getAfterDeleteRes = await fetch(`${baseURL}/api/slc/v1/liquidacoes/${created.numCtrlCip}/processamento`);
   assert.equal(getAfterDeleteRes.status, 404);
+});
+
+test('receivables flow: create, list, get, update, delete and delete-all', async () => {
+  const payload = {
+    processReference: null,
+    receivables: [
+      {
+        id: 11,
+        key: 'processing',
+        reference: 'UR_UPy87wFHAN0NIZSLt8JIFwHPvgdBrII6',
+        user_id: 278,
+        dueDate: '2026-04-16',
+        originalAssetHolderDocumentType: 'CPF',
+        originalAssetHolder: '60100036015',
+        paymentScheme: 'MCC',
+        amount: 1325,
+        prePaidAmount: 0,
+        bankAccount: {
+          branch: '4593',
+          account: '0000000',
+          accountDigit: '7',
+          accountType: 'CC',
+          documentType: 'CPF',
+          documentNumber: '60100036015',
+          ispb: '00000000',
+        },
+      },
+    ],
+  };
+
+  const createRes = await fetch(`${baseURL}/api/slc/v1/receivables`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  assert.equal(createRes.status, 201);
+  const created = await createRes.json();
+  assert.match(created.processKey, /^[0-9a-f-]{36}$/i);
+  assert.ok(Array.isArray(created.receivables));
+  assert.equal(created.receivables.length, 1);
+  assert.notEqual(created.receivables[0].key, 'processing');
+  assert.match(created.receivables[0].key, /^[0-9a-f]{32}$/i);
+  assert.ok(Array.isArray(created.receivables[0].settlements));
+  assert.equal(created.receivables[0].settlements.length, 1);
+  assert.ok(Array.isArray(created.receivables[0].settlementObligations));
+  assert.ok(Array.isArray(created.receivables[0].settlementObligations[0].settlements));
+
+  const listRes = await fetch(`${baseURL}/api/slc/v1/receivables?limit=10`);
+  assert.equal(listRes.status, 200);
+  const list = await listRes.json();
+  assert.ok(Array.isArray(list.items));
+  assert.ok(list.items.some((x) => x.processKey === created.processKey));
+
+  const listByKeyRes = await fetch(`${baseURL}/api/slc/v1/receivables?limit=10&key=${created.processKey}`);
+  assert.equal(listByKeyRes.status, 200);
+  const listByKey = await listByKeyRes.json();
+  assert.ok(Array.isArray(listByKey.items));
+  assert.ok(listByKey.items.some((x) => x.processKey === created.processKey));
+
+  const getRes = await fetch(`${baseURL}/api/slc/v1/receivables/${created.processKey}`);
+  assert.equal(getRes.status, 200);
+  const full = await getRes.json();
+  assert.equal(full.processKey, created.processKey);
+  assert.equal(full.request.processReference, null);
+  assert.equal(full.response.processKey, created.processKey);
+  assert.ok(Array.isArray(full.response.receivables?.[0]?.settlementObligations));
+  assert.ok(Array.isArray(full.response.receivables?.[0]?.settlementObligations?.[0]?.settlements));
+  assert.equal(full.response.receivables?.[0]?.settlementObligations?.[0]?.settlements?.length, 0);
+
+  const settlementPayload = {
+    idempotencyKey: null,
+    settlements: [
+      {
+        reference: 'ST_TEST_001',
+        originalAssetHolder: '60100036015',
+        assetHolderDocumentType: 'CPF',
+        assetHolder: '60100036015',
+        settlementDate: '2026-04-16',
+        amount: 21014,
+        settlementObligationDate: '2026-04-16',
+        paymentScheme: 'MCC',
+        bankAccount: {
+          branch: '4593',
+          account: '0000000',
+          accountDigit: '7',
+          accountType: 'CC',
+          documentType: 'CPF',
+          documentNumber: '60100036015',
+          ispb: '00000000',
+        },
+      },
+    ],
+  };
+
+  const patchSettlementRes = await fetch(`${baseURL}/receivable/settlement`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settlementPayload),
+  });
+  assert.equal(patchSettlementRes.status, 200);
+  const patchSettlementBody = await patchSettlementRes.json();
+  assert.ok(Array.isArray(patchSettlementBody.settlements));
+  assert.equal(patchSettlementBody.settlements.length, 1);
+  assert.match(String(patchSettlementBody.processKey), /^[0-9a-f-]{36}$/i);
+  assert.ok(patchSettlementBody.createdAt);
+
+  const getAfterSettlementRes = await fetch(`${baseURL}/api/slc/v1/receivables/${created.processKey}`);
+  assert.equal(getAfterSettlementRes.status, 200);
+  const afterSettlement = await getAfterSettlementRes.json();
+  const obligation = afterSettlement.response.receivables[0].settlementObligations[0];
+  assert.equal(obligation.settledAmount, 21014);
+  assert.equal(obligation.committedAmount, 21014);
+  assert.equal(obligation.balanceAmount, obligation.totalAmount - 21014);
+  assert.equal(obligation.uncommittedAmount, obligation.totalAmount - 21014);
+  assert.ok(Array.isArray(obligation.settlements));
+  assert.equal(obligation.settlements.length, 1);
+
+  const patchSettlementAgainRes = await fetch(`${baseURL}/receivable/settlement`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...settlementPayload,
+      settlements: [{ ...settlementPayload.settlements[0], amount: 99999 }],
+    }),
+  });
+  assert.equal(patchSettlementAgainRes.status, 200);
+  const patchSettlementAgainBody = await patchSettlementAgainRes.json();
+  assert.ok(Array.isArray(patchSettlementAgainBody.settlements));
+  assert.equal(patchSettlementAgainBody.settlements.length, 1);
+
+  const getAfterSettlementAgainRes = await fetch(`${baseURL}/api/slc/v1/receivables/${created.processKey}`);
+  const afterSettlementAgain = await getAfterSettlementAgainRes.json();
+  const obligationAgain = afterSettlementAgain.response.receivables[0].settlementObligations[0];
+  assert.equal(obligationAgain.settlements.length, 1);
+  assert.equal(obligationAgain.settlements[0].amount, 21014);
+
+  const sameComboPayload = {
+    processReference: 'again',
+    receivables: [
+      {
+        reference: 'UR_DIFFERENT_SHOULD_NOT_OVERRIDE',
+        dueDate: '2026-04-16',
+        originalAssetHolder: '60100036015',
+        paymentScheme: 'MCC',
+        amount: 9999,
+        bankAccount: { documentNumber: '00000000000' },
+      },
+    ],
+  };
+  const createSameComboRes = await fetch(`${baseURL}/api/slc/v1/receivables`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sameComboPayload),
+  });
+  assert.equal(createSameComboRes.status, 200);
+  const sameComboCreated = await createSameComboRes.json();
+  assert.equal(sameComboCreated.receivables[0].key, created.receivables[0].key);
+  assert.equal(sameComboCreated.receivables[0].reference, created.receivables[0].reference);
+
+  const getOldAfterSameComboRes = await fetch(`${baseURL}/api/slc/v1/receivables/${created.processKey}`);
+  assert.equal(getOldAfterSameComboRes.status, 200);
+  const oldAfterSameCombo = await getOldAfterSameComboRes.json();
+  assert.equal(oldAfterSameCombo.response.receivables[0].key, created.receivables[0].key);
+  assert.equal(oldAfterSameCombo.response.receivables[0].amount, 9999);
+  assert.equal(oldAfterSameCombo.request.receivables[0].amount, 9999);
+
+  const updatedResponse = { ...full.response, processKey: full.response.processKey, status: 'UPDATED' };
+  const putRes = await fetch(`${baseURL}/api/slc/v1/receivables/${created.processKey}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ response: updatedResponse }),
+  });
+  assert.equal(putRes.status, 200);
+  const updated = await putRes.json();
+  assert.equal(updated.response.status, 'UPDATED');
+
+  const delOneRes = await fetch(`${baseURL}/api/slc/v1/receivables/${created.processKey}`, {
+    method: 'DELETE',
+  });
+  assert.equal(delOneRes.status, 200);
+  const delOne = await delOneRes.json();
+  assert.equal(delOne.ok, true);
+
+  const createRes2 = await fetch(`${baseURL}/api/slc/v1/receivables`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  assert.equal(createRes2.status, 201);
+
+  const delAllRes = await fetch(`${baseURL}/api/slc/v1/receivables`, { method: 'DELETE' });
+  assert.equal(delAllRes.status, 200);
+  const delAll = await delAllRes.json();
+  assert.equal(delAll.ok, true);
+  assert.ok(Number(delAll.deleted) >= 1);
+});
+
+test('receivable direct endpoint flow: create via /receivable', async () => {
+  const payload = {
+    processReference: null,
+    receivables: [
+      {
+        id: 21,
+        reference: 'UR_DIRECT_001',
+        dueDate: '2026-04-17',
+        originalAssetHolder: '99999999999999',
+        paymentScheme: 'GCC',
+        bankAccount: { documentNumber: '88888888888888' },
+      },
+    ],
+  };
+
+  const createRes = await fetch(`${baseURL}/receivable`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  assert.equal(createRes.status, 201);
+  const created = await createRes.json();
+  assert.match(created.processKey, /^[0-9a-f-]{36}$/i);
+
+  const getRes = await fetch(`${baseURL}/receivable/${created.processKey}`);
+  assert.equal(getRes.status, 200);
+  const got = await getRes.json();
+  assert.equal(got.processKey, created.processKey);
 });
 
 test.after(async () => {

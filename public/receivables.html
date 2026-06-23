@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Receivables</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="page-header">
+        <h1>Receivables</h1>
+        <div class="page-actions">
+          <a class="button-link" href="/">Voltar para Inbox</a>
+          <input id="searchKeyInput" type="search" placeholder="Filtrar por key..." />
+          <button id="refreshReceivablesBtn" type="button">Atualizar</button>
+          <button id="clearAllReceivablesBtn" class="danger" type="button">Limpar todos</button>
+        </div>
+      </div>
+
+      <div class="lotes-grid">
+        <section class="panel">
+          <div class="panel-header">
+            <span id="receivablesTotal">0 processos</span>
+            <div class="pager">
+              <button id="prevReceivablesBtn">Anterior</button>
+              <span id="receivablesPageInfo">1/1</span>
+              <button id="nextReceivablesBtn">Próxima</button>
+            </div>
+          </div>
+          <div id="receivablesList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <strong>Detalhe do processo</strong>
+          </div>
+          <div id="receivableDetail" class="detail-wrap">
+            <div class="empty">Selecione um processo para visualizar</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="/receivables.js?v=3"></script>
+  </body>
+  </html>

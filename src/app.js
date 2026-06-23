@@ -9,6 +9,11 @@ import emailsRoutes from './routes/emails.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import logsRoutes from './routes/logs.routes.js';
 import liquidacoesRoutes from './routes/liquidacoes.routes.js';
+import receivablesRoutes from './routes/receivables.routes.js';
+import receivableDirectRoutes from './routes/receivable-direct.routes.js';
+import holidayRoutes from './routes/holiday.routes.js';
+import equalsApiRoutes from './routes/equals-api.routes.js';
+import equalsMockRoutes from './routes/equals-mock.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,7 +62,7 @@ app.use((req, _res, next) => {
 // CORS simples
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.header('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -74,6 +79,11 @@ app.use('/api', healthRoutes);
 app.use('/api', emailsRoutes);
 app.use('/api', logsRoutes);
 app.use('/api', liquidacoesRoutes);
+app.use('/api', receivablesRoutes);
+app.use('/api', equalsMockRoutes);
+app.use('/equals-api', equalsApiRoutes);
+app.use('/', receivableDirectRoutes);
+app.use('/', holidayRoutes);
 
 // Tratativa explícita para payload grande: retorna JSON amigável
 app.use((err, req, res, next) => {
