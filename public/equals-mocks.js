@@ -118,14 +118,18 @@ async function loadTransactions() {
   }
 
   list.innerHTML = items.map((txn) => `
-    <div class="txn-item">
+    <div class="txn-item" data-txn-id="${txn.id}" data-txn-date="${txn.createdAt}" data-txn-payload='${escapeAttr(JSON.stringify(txn.payload))}'>
       <div class="txn-item-header">
         <span>#${txn.id} — ${formatDate(txn.createdAt)}</span>
         <span class="txn-count-badge">${Array.isArray(txn.payload) ? txn.payload.length : 1} venda(s)</span>
       </div>
-      <div class="json-box" style="max-height:300px">${escapeHtml(JSON.stringify(txn.payload, null, 2))}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:4px">Clique para visualizar o JSON completo</div>
     </div>
   `).join('');
+
+  list.querySelectorAll('.txn-item').forEach((el) => {
+    el.addEventListener('click', () => openTxnModal(el.dataset));
+  });
 }
 
 async function clearTransactions() {
@@ -135,6 +139,51 @@ async function clearTransactions() {
     txnPage = 0;
     loadTransactions();
   }
+}
+
+// ─── Transaction Modal ────────────────────────────────────────────────────────
+
+const txnModal = document.getElementById('txn-modal');
+const txnModalBody = document.getElementById('txn-modal-body');
+const txnModalTitle = document.getElementById('txn-modal-title');
+
+document.getElementById('txn-modal-close')?.addEventListener('click', closeTxnModal);
+txnModal?.addEventListener('click', (e) => { if (e.target === txnModal) closeTxnModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTxnModal(); });
+
+function openTxnModal({ txnId, txnDate, txnPayload }) {
+  let parsed;
+  try { parsed = JSON.parse(txnPayload); } catch { parsed = txnPayload; }
+  const count = Array.isArray(parsed) ? parsed.length : 1;
+  txnModalTitle.textContent = `Lote #${txnId} — ${formatDate(txnDate)} — ${count} venda(s)`;
+  txnModalBody.innerHTML = syntaxHighlightJson(JSON.stringify(parsed, null, 2));
+  txnModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTxnModal() {
+  txnModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function syntaxHighlightJson(json) {
+  const escaped = json
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  return escaped.replace(
+    /("(?:[^"\\]|\\.)*")(\s*:)|("(?:[^"\\]|\\.)*")|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|(\btrue\b|\bfalse\b)|(\bnull\b)|([{}\[\],:])/g,
+    (match, key, colon, str, num, bool, nil, punct) => {
+      if (key && colon) return `<span class="json-key">${key}</span><span class="json-punct">${colon}</span>`;
+      if (str)   return `<span class="json-str">${str}</span>`;
+      if (num)   return `<span class="json-num">${num}</span>`;
+      if (bool)  return `<span class="json-bool">${bool}</span>`;
+      if (nil)   return `<span class="json-null">${nil}</span>`;
+      if (punct) return `<span class="json-punct">${punct}</span>`;
+      return match;
+    }
+  );
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -150,6 +199,10 @@ function formatDate(iso) {
 
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeAttr(str) {
+  return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
