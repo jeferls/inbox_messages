@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { DB_PATH } from '../config/env.js';
 import crypto from 'node:crypto';
+import { rewriteClaimUrls } from '../utils/urlRewrite.js';
 
 let db;
 
@@ -40,6 +41,7 @@ export async function dbInit() {
   `);
 
   await normalizeAllReceivableProcessPayloadResponses();
+  await rewriteExistingEmailClaimUrls();
 
   await run(`
     CREATE TABLE IF NOT EXISTS equals_mock_config (
@@ -128,6 +130,10 @@ export async function deleteEmailById(id) {
 export async function appendEmailBody(id, chunk) {
   // Concatena chunk no corpo em atualização incremental
   await run(`UPDATE emails SET body = COALESCE(body, '') || ? WHERE id = ?`, [chunk, id]);
+}
+
+export async function updateEmailBody(id, body) {
+  await run(`UPDATE emails SET body = ? WHERE id = ?`, [body, id]);
 }
 
 export async function queryEmails({ limit = 50, offset = 0, search, unread = false }) {
@@ -222,6 +228,16 @@ async function normalizeAllReceivableProcessPayloadResponses() {
        WHERE process_key = ?`,
       [JSON.stringify(normalized), row.process_key]
     );
+  }
+}
+
+async function rewriteExistingEmailClaimUrls() {
+  const rows = await all(`SELECT id, body FROM emails WHERE body LIKE '%reclamacao.greenn.com.br%'`);
+  for (const row of rows) {
+    const rewritten = rewriteClaimUrls(row.body);
+    if (rewritten !== row.body) {
+      await run(`UPDATE emails SET body = ? WHERE id = ?`, [rewritten, row.id]);
+    }
   }
 }
 

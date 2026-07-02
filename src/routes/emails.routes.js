@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { createEmail, listEmailsHandler, getEmailHandler, clearEmailsHandler } from '../controllers/emails.controller.js';
-import { insertEmail, appendEmailBody, deleteEmailById } from '../db/index.js';
+import { insertEmail, appendEmailBody, updateEmailBody, getEmailById, deleteEmailById } from '../db/index.js';
 import { logLine } from '../utils/logger.js';
+import { rewriteClaimUrls } from '../utils/urlRewrite.js';
 
 const router = Router();
 
@@ -49,6 +50,10 @@ router.post('/emails/stream', async (req, res) => {
     req.on('end', async () => {
       try {
         if (buffered.length) await appendEmailBody(id, buffered);
+        // Passagem única de reescrita ao final, evita perder ocorrências partidas entre chunks
+        const row = await getEmailById(id);
+        const rewritten = rewriteClaimUrls(row?.body);
+        if (row && rewritten !== row.body) await updateEmailBody(id, rewritten);
         await logLine('info', 'stream-end', { reqId, id, bytes, chunks }).catch(() => {});
         res.status(201).json({ ...created, id });
       } catch (e) {

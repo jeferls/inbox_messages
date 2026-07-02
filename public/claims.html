@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reclamações</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .claim-form { max-width: 640px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .claim-form label { display: block; font-weight: 600; font-size: 13px; margin: 14px 0 6px; }
+      .claim-form label:first-of-type { margin-top: 0; }
+      .claim-form input[type="text"],
+      .claim-form input[type="url"],
+      .claim-form textarea {
+        width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+        font-family: inherit; font-size: 14px;
+      }
+      .claim-form textarea { min-height: 90px; resize: vertical; }
+      .claim-form .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
+      .claim-form .form-row { display: flex; gap: 12px; }
+      .claim-form .form-row > div { flex: 1; }
+      .form-actions { margin-top: 18px; display: flex; align-items: center; gap: 10px; }
+      .result-box { max-width: 640px; margin-top: 20px; }
+      .result-status { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+      .result-status.ok { color: #15803d; }
+      .result-status.err { color: #b91c1c; }
+      .result-body { background: #0b1020; color: #cbd5e1; border-radius: 8px; padding: 12px; overflow: auto; max-height: 50vh; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+      .track-box { max-width: 640px; margin-top: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; }
+      .track-box h2 { font-size: 15px; margin: 0 0 8px; }
+      .track-link { display: inline-block; margin-top: 8px; word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="page-header">
+        <h1>Reclamações</h1>
+        <div class="page-actions">
+          <a class="button-link" href="/">Voltar para Inbox</a>
+        </div>
+      </div>
+
+      <div class="config-info">
+        Dispara uma reclamação via <code>POST {base}/api/claim</code> (multipart/form-data).
+        Ajuste a base da URL e os campos abaixo conforme necessário.
+      </div>
+
+      <form id="claimForm" class="claim-form">
+        <label for="baseUrl">Base da URL</label>
+        <input id="baseUrl" name="baseUrl" type="text" value="http://greenn-back-nginx" />
+        <div class="hint">O caminho <code>/api/claim</code> é adicionado automaticamente.</div>
+
+        <div class="form-row">
+          <div>
+            <label for="sale_id">sale_id</label>
+            <input id="sale_id" name="sale_id" type="text" value="2324987" />
+          </div>
+          <div>
+            <label for="client_id">client_id</label>
+            <input id="client_id" name="client_id" type="text" value="1500905" />
+          </div>
+        </div>
+
+        <label for="category">category</label>
+        <input id="category" name="category" type="text" value="Entrega" />
+
+        <label for="subjective">subjective</label>
+        <input id="subjective" name="subjective" type="text" value="Produto não chegou" />
+
+        <label for="objective">objective</label>
+        <input id="objective" name="objective" type="text" value="Quero a resolução do problema" />
+
+        <label for="description">description</label>
+        <textarea id="description" name="description">Fiz a compra há mais de 10 dias e o produto ainda não chegou até o momento, gostaria de uma solução rápida para esse problema por favor.</textarea>
+
+        <div class="form-actions">
+          <button type="submit" id="sendClaimBtn">Enviar reclamação</button>
+          <span id="claimStatusLine" class="status-line"></span>
+        </div>
+      </form>
+
+      <div id="resultBox" class="result-box" hidden>
+        <div id="resultStatus" class="result-status"></div>
+        <pre id="resultBody" class="result-body"></pre>
+      </div>
+
+      <div id="trackBox" class="track-box" hidden>
+        <h2>Acompanhar reclamação</h2>
+        <p class="hint">
+          Envia o email de acesso (<code>GET {base}/api/claim/secret</code>) e busca o link "Acessar Reclamação"
+          recebido no Inbox (já reescrito para apontar para a página local).
+        </p>
+        <button type="button" id="trackBtn">Buscar link de acompanhamento</button>
+        <span id="trackStatusLine" class="status-line"></span>
+        <div id="trackLinkWrap" hidden>
+          <a id="trackLink" class="track-link" href="#" target="_blank" rel="noopener noreferrer nofollow"></a>
+        </div>
+      </div>
+    </div>
+
+    <script src="/claims.js"></script>
+  </body>
+</html>

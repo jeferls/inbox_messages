@@ -21,6 +21,10 @@ export const BODY_LIMIT = (() => {
 export const DEFAULT_DB_PATH = path.join(__dirname, '..', '..', 'data.db');
 export const DB_PATH = (process.env.DB_PATH && process.env.DB_PATH.trim()) || DEFAULT_DB_PATH;
 
+// Página local de acompanhamento de reclamação (substitui links de https://reclamacao.greenn.com.br
+// nos e-mails recebidos, para que o botão do e-mail aponte para o ambiente local)
+export const CLAIM_PAGE_URL = (process.env.CLAIM_PAGE_URL && process.env.CLAIM_PAGE_URL.trim()) || 'http://localhost:6002';
+
 // Logs
 export const LOG_DIR = (process.env.LOG_DIR && process.env.LOG_DIR.trim()) || path.join(__dirname, '..', '..', 'logs');
 export const LOG_FILE = (process.env.LOG_FILE && process.env.LOG_FILE.trim()) || path.join(LOG_DIR, 'app.log');

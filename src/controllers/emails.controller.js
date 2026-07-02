@@ -1,4 +1,5 @@
 import { insertEmail, queryEmails, getEmailById, markEmailRead, deleteAllEmails } from '../db/index.js';
+import { rewriteClaimUrls } from '../utils/urlRewrite.js';
 
 function apiEmail(row) {
   if (!row || typeof row !== 'object') return row;
@@ -16,7 +17,7 @@ export async function createEmail(req, res) {
       return res.status(400).json({ error: 'Campos obrigatórios: titulo/title, destinatario/recipient/to_address, body/body_email' });
     }
 
-    const created = await insertEmail({ title: finalTitle, recipient: finalRecipient, body: finalBody });
+    const created = await insertEmail({ title: finalTitle, recipient: finalRecipient, body: rewriteClaimUrls(finalBody) });
     res.status(201).json(apiEmail(created));
   } catch (err) {
     console.error(err);

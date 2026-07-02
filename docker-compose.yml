@@ -24,6 +24,20 @@ services:
     networks:
       - greenn-network
 
+  claim_page:
+    container_name: svc-claim-page
+    build: ./claim-page
+    image: claim-page:latest
+    environment:
+      - NODE_ENV=production
+      - PORT=80
+      # Hostname do greenn-back dentro da rede greenn-network (container-to-container)
+      - GREENN_BACK_URL=http://greenn-back-nginx
+    ports:
+      - "6002:80"
+    networks:
+      - greenn-network
+
 volumes:
   inbox_data:
     driver: local
