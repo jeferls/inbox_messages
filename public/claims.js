@@ -15,7 +15,7 @@ const FIELDS = ['sale_id', 'client_id', 'subjective', 'category', 'objective', '
 
 const ENV_URLS = {
   local: 'http://greenn-back-nginx',
-  staging: 'http://apipay-staging.greenn.com.br',
+  staging: 'https://apipay-staging.greenn.com.br',
 };
 
 const baseUrlInput = document.getElementById('baseUrl');
