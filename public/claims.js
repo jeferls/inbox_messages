@@ -13,6 +13,23 @@ const trackLink = document.getElementById('trackLink');
 
 const FIELDS = ['sale_id', 'client_id', 'subjective', 'category', 'objective', 'description'];
 
+const ENV_URLS = {
+  local: 'http://greenn-back-nginx',
+  staging: 'http://apipay-staging.greenn.com.br',
+};
+
+const baseUrlInput = document.getElementById('baseUrl');
+const envRadios = document.querySelectorAll('input[name="envTarget"]');
+
+envRadios.forEach((radio) => {
+  radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    envRadios.forEach((r) => r.closest('.env-option').classList.toggle('active', r === radio));
+    baseUrlInput.value = ENV_URLS[radio.value];
+    document.body.classList.toggle('env-staging-active', radio.value === 'staging');
+  });
+});
+
 let lastClaimId = null;
 
 claimForm.addEventListener('submit', async (e) => {

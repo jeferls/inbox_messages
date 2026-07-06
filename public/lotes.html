@@ -7,40 +7,54 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <div class="page-header">
-        <h1>Lotes de Liquidação</h1>
-        <div class="page-actions">
-          <a class="button-link" href="/">Voltar para Inbox</a>
-          <button id="refreshLotesBtn">Atualizar</button>
-          <button id="clearAllLotesBtn" class="danger" type="button">Limpar todos os lotes</button>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link active" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
         </div>
-      </div>
-
-      <div class="lotes-grid">
-        <section class="panel">
-          <div class="panel-header">
-            <span id="lotesTotal">0 lotes</span>
-            <div class="pager">
-              <button id="prevLotesBtn">Anterior</button>
-              <span id="lotesPageInfo">1/1</span>
-              <button id="nextLotesBtn">Próxima</button>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Lotes de Liquidação</h1>
+            <div class="page-actions">
+              <button id="refreshLotesBtn">Atualizar</button>
+              <button id="clearAllLotesBtn" class="danger" type="button">Limpar todos os lotes</button>
             </div>
           </div>
-          <div id="lotesList"></div>
-        </section>
 
-        <section class="panel">
-          <div class="panel-header">
-            <strong>Processamento do lote</strong>
+          <div class="lotes-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <span id="lotesTotal">0 lotes</span>
+                <div class="pager">
+                  <button id="prevLotesBtn">Anterior</button>
+                  <span id="lotesPageInfo">1/1</span>
+                  <button id="nextLotesBtn">Próxima</button>
+                </div>
+              </div>
+              <div id="lotesList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <strong>Processamento do lote</strong>
+              </div>
+              <div id="loteDetail" class="detail-wrap">
+                <div class="empty">Selecione um lote para visualizar</div>
+              </div>
+            </section>
           </div>
-          <div id="loteDetail" class="detail-wrap">
-            <div class="empty">Selecione um lote para visualizar</div>
-          </div>
-        </section>
+        </div>
       </div>
     </div>
 
     <script src="/lotes.js?v=3"></script>
   </body>
-  </html>
+</html>

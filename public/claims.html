@@ -28,15 +28,33 @@
       .track-box { max-width: 640px; margin-top: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; }
       .track-box h2 { font-size: 15px; margin: 0 0 8px; }
       .track-link { display: inline-block; margin-top: 8px; word-break: break-all; }
+      .env-fieldset { border: none; margin: 0; padding: 0; }
+      .env-fieldset legend { font-weight: 600; font-size: 13px; padding: 0; margin-bottom: 6px; }
+      .env-toggle { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+      .claim-form .env-option { display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin: 0; cursor: pointer; font-size: 14px; font-weight: normal; color: #374151; background: #fff; }
+      .env-option:not(:last-child) { border-right: 1px solid #d1d5db; }
+      .env-option input { margin: 0; }
+      .env-option.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+      body.env-staging-active .app-content { background: #fca5a5; }
     </style>
   </head>
   <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <a class="sidebar-link active" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+        </div>
+      </nav>
+      <div class="app-content">
     <div class="page-shell">
       <div class="page-header">
         <h1>Reclamações</h1>
-        <div class="page-actions">
-          <a class="button-link" href="/">Voltar para Inbox</a>
-        </div>
       </div>
 
       <div class="config-info">
@@ -45,6 +63,18 @@
       </div>
 
       <form id="claimForm" class="claim-form">
+        <fieldset class="env-fieldset">
+          <legend>Ambiente</legend>
+          <div class="env-toggle">
+            <label class="env-option active">
+              <input type="radio" name="envTarget" value="local" checked /> Local
+            </label>
+            <label class="env-option">
+              <input type="radio" name="envTarget" value="staging" /> Staging
+            </label>
+          </div>
+        </fieldset>
+
         <label for="baseUrl">Base da URL</label>
         <input id="baseUrl" name="baseUrl" type="text" value="http://greenn-back-nginx" />
         <div class="hint">O caminho <code>/api/claim</code> é adicionado automaticamente.</div>
@@ -94,6 +124,8 @@
         <div id="trackLinkWrap" hidden>
           <a id="trackLink" class="track-link" href="#" target="_blank" rel="noopener noreferrer nofollow"></a>
         </div>
+      </div>
+    </div>
       </div>
     </div>
 

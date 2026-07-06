@@ -60,12 +60,22 @@
     </style>
   </head>
   <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link active" href="/equals-mocks.html">Equals Mocks</a>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+        </div>
+      </nav>
+      <div class="app-content">
     <div class="page-shell">
       <div class="page-header">
         <h1>Equals API Mock</h1>
-        <div class="page-actions">
-          <a class="button-link" href="/">Voltar para Inbox</a>
-        </div>
       </div>
 
       <div class="config-info" style="margin-bottom:16px">
@@ -161,6 +171,8 @@
           <button id="next-transacoes">Próxima</button>
         </div>
         <div id="transacoes-list"></div>
+      </div>
+    </div>
       </div>
     </div>
 

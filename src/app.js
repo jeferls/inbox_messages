@@ -15,6 +15,7 @@ import holidayRoutes from './routes/holiday.routes.js';
 import equalsApiRoutes from './routes/equals-api.routes.js';
 import equalsMockRoutes from './routes/equals-mock.routes.js';
 import claimsRoutes from './routes/claims.routes.js';
+import postbackGatewayRoutes from './routes/postback-gateway.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +84,7 @@ app.use('/api', liquidacoesRoutes);
 app.use('/api', receivablesRoutes);
 app.use('/api', equalsMockRoutes);
 app.use('/api', claimsRoutes);
+app.use('/api', postbackGatewayRoutes);
 app.use('/equals-api', equalsApiRoutes);
 app.use('/', receivableDirectRoutes);
 app.use('/', holidayRoutes);

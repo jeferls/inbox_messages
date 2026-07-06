@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Postback Gateway</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .claim-form { max-width: 640px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .claim-form label { display: block; font-weight: 600; font-size: 13px; margin: 14px 0 6px; }
+      .claim-form label:first-of-type { margin-top: 0; }
+      .claim-form input[type="text"],
+      .claim-form select {
+        width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+        font-family: inherit; font-size: 14px; background: #fff;
+      }
+      .claim-form .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
+      .form-actions { margin-top: 18px; display: flex; align-items: center; gap: 10px; }
+      .result-box { max-width: 640px; margin-top: 20px; }
+      .result-status { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+      .result-status.ok { color: #15803d; }
+      .result-status.err { color: #b91c1c; }
+      .result-body { background: #0b1020; color: #cbd5e1; border-radius: 8px; padding: 12px; overflow: auto; max-height: 50vh; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+      .json-edit { width: 100%; min-height: 260px; font-family: ui-monospace, 'Fira Mono', Consolas, monospace; font-size: 12.5px; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; resize: vertical; }
+      .json-error { color: #b91c1c; font-size: 12px; margin-top: 4px; }
+      .env-fieldset { border: none; margin: 0; padding: 0; }
+      .env-fieldset legend { font-weight: 600; font-size: 13px; padding: 0; margin-bottom: 6px; }
+      .env-toggle { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+      .claim-form .env-option { display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin: 0; cursor: pointer; font-size: 14px; font-weight: normal; color: #374151; background: #fff; }
+      .env-option:not(:last-child) { border-right: 1px solid #d1d5db; }
+      .env-option input { margin: 0; }
+      .env-option.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+      body.env-staging-active .app-content { background: #fca5a5; }
+      .warn-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; max-width: 640px; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link active" href="/postback-gateway.html">Postback Gateway</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Postback Gateway</h1>
+          </div>
+
+          <div class="config-info">
+            Dispara um postback via <code>POST {base}/gateway/webhook</code>, simulando o retorno de status de um gateway de pagamento (Cielo, Pagarme, Worldpay, etc.) para o greenn-back.
+            É necessário que já exista uma venda (<code>Sale</code>) no banco com o <code>transaction_id</code> informado.
+          </div>
+
+          <div class="warn-box">
+            Atenção: este postback atualiza o status real da venda vinculada ao transaction_id. Use com cuidado, principalmente em Staging.
+          </div>
+
+          <form id="postbackForm" class="claim-form">
+            <fieldset class="env-fieldset">
+              <legend>Ambiente</legend>
+              <div class="env-toggle">
+                <label class="env-option active">
+                  <input type="radio" name="envTarget" value="local" checked /> Local
+                </label>
+                <label class="env-option">
+                  <input type="radio" name="envTarget" value="staging" /> Staging
+                </label>
+              </div>
+            </fieldset>
+
+            <label for="baseUrl">Base da URL</label>
+            <input id="baseUrl" name="baseUrl" type="text" value="http://greenn-back-nginx" />
+            <div class="hint">O caminho <code>/gateway/webhook</code> é adicionado automaticamente.</div>
+
+            <label for="transactionId">Transaction ID</label>
+            <input id="transactionId" name="transactionId" type="text" value="caff8353-a1bf-4b39-94a8-9625ddd1fb2f" />
+            <div class="hint">Enviado como <code>id</code> — usado para localizar a venda pelo <code>transaction_id</code>.</div>
+
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="refunded">refunded</option>
+              <option value="paid">paid</option>
+              <option value="created">created</option>
+              <option value="waiting_payment">waiting_payment</option>
+              <option value="delayed">delayed</option>
+              <option value="trialing">trialing</option>
+              <option value="refused">refused</option>
+              <option value="refund_pending">refund_pending</option>
+              <option value="chargedback">chargedback</option>
+              <option value="canceled">canceled</option>
+              <option value="pending_fraud_analysis">pending_fraud_analysis</option>
+            </select>
+            <div class="hint">Enviado como <code>current_status</code> (e também <code>status</code>) — é o único campo de fato necessário além do <code>id</code>. Lista baseada em <code>Domain\Shared\Enums\SaleStatus</code> do greenn-back.</div>
+
+            <label for="event">Event</label>
+            <input id="event" name="event" type="text" value="payment_status_change" />
+            <div class="hint">Necessário apenas para o histórico da venda não falhar ao salvar; normalmente não precisa mudar.</div>
+
+            <label for="integration">Integration (opcional)</label>
+            <input id="integration" name="integration" type="text" placeholder="cielo, pagarme, worldpay..." />
+            <div class="hint">Usado apenas como rótulo do gateway caso a venda ainda não tenha um definido.</div>
+
+            <label for="payloadJson">JSON do webhook</label>
+            <textarea id="payloadJson" class="json-edit" spellcheck="false"></textarea>
+            <div class="hint">
+              Gerado automaticamente a partir dos campos acima. Você também pode colar aqui um JSON completo (por exemplo, o payload real de um gateway) —
+              os campos acima passam a editar esse JSON no lugar do mínimo padrão, sem afetar os demais campos dele. É esse JSON que será enviado.
+            </div>
+            <div id="jsonError" class="json-error" hidden>JSON inválido — corrija antes de enviar.</div>
+
+            <div class="form-actions">
+              <button type="submit" id="sendPostbackBtn">Enviar postback</button>
+              <span id="postbackStatusLine" class="status-line"></span>
+            </div>
+          </form>
+
+          <div id="resultBox" class="result-box" hidden>
+            <div id="resultStatus" class="result-status"></div>
+            <pre id="resultBody" class="result-body"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/postback-gateway.js"></script>
+  </body>
+</html>
