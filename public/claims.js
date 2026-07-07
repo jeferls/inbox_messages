@@ -30,6 +30,81 @@ envRadios.forEach((radio) => {
   });
 });
 
+const randomizeBtn = document.getElementById('randomizeBtn');
+
+const CLAIM_TEMPLATES = [
+  {
+    category: 'Entrega',
+    subjective: 'Produto não chegou',
+    objective: 'Quero a resolução do problema',
+    description: 'Fiz a compra há mais de 10 dias e o produto ainda não chegou até o momento, gostaria de uma solução rápida para esse problema por favor.',
+  },
+  {
+    category: 'Entrega',
+    subjective: 'Pedido chegou com atraso',
+    objective: 'Quero um reembolso do frete',
+    description: 'O prazo de entrega informado no site era de 5 dias úteis, mas o produto só chegou depois de 15 dias. Gostaria de ser reembolsado pelo valor pago no frete.',
+  },
+  {
+    category: 'Produto',
+    subjective: 'Produto veio com defeito',
+    objective: 'Quero a troca do produto',
+    description: 'Recebi o produto, mas ao testar percebi que ele não liga e apresenta defeito de fabricação. Gostaria de solicitar a troca por uma unidade sem defeito.',
+  },
+  {
+    category: 'Produto',
+    subjective: 'Produto diferente do anunciado',
+    objective: 'Quero devolver o produto e ser reembolsado',
+    description: 'O produto que recebi não corresponde à descrição e às fotos apresentadas no anúncio. Gostaria de devolvê-lo e receber o reembolso integral do valor pago.',
+  },
+  {
+    category: 'Pagamento',
+    subjective: 'Cobrança em duplicidade',
+    objective: 'Quero o estorno do valor cobrado a mais',
+    description: 'Percebi que fui cobrado duas vezes pela mesma compra no meu cartão de crédito. Peço que seja feito o estorno do valor duplicado o quanto antes.',
+  },
+  {
+    category: 'Reembolso',
+    subjective: 'Reembolso não foi processado',
+    objective: 'Quero receber meu reembolso',
+    description: 'Cancelei minha compra há mais de 7 dias e até agora não recebi o reembolso do valor pago. Já entrei em contato com o suporte, mas não obtive resposta.',
+  },
+  {
+    category: 'Atendimento',
+    subjective: 'Falta de resposta do suporte',
+    objective: 'Quero um retorno da equipe de atendimento',
+    description: 'Enviei diversas mensagens para o suporte relatando um problema com meu pedido e não obtive nenhuma resposta há mais de 5 dias. Preciso de um retorno urgente.',
+  },
+  {
+    category: 'Entrega',
+    subjective: 'Pedido cancelado sem aviso',
+    objective: 'Quero entender o motivo do cancelamento',
+    description: 'Meu pedido foi cancelado automaticamente sem nenhuma justificativa ou aviso prévio. Gostaria de saber o motivo e, se possível, que o pedido seja restabelecido.',
+  },
+  {
+    category: 'Produto',
+    subjective: 'Faltou item no pedido',
+    objective: 'Quero receber o item faltante',
+    description: 'Meu pedido chegou incompleto, faltando um dos itens comprados. Gostaria que o item faltante fosse enviado o quanto antes ou que o valor correspondente fosse reembolsado.',
+  },
+  {
+    category: 'Pagamento',
+    subjective: 'Cartão foi cobrado, mas pedido não foi confirmado',
+    objective: 'Quero a confirmação do pedido ou o estorno do valor',
+    description: 'O valor da compra foi debitado do meu cartão, porém não recebi nenhuma confirmação do pedido nem código de rastreio. Preciso que o pedido seja confirmado ou que o valor seja estornado.',
+  },
+];
+
+function applyRandomClaimTemplate() {
+  const template = CLAIM_TEMPLATES[Math.floor(Math.random() * CLAIM_TEMPLATES.length)];
+  document.getElementById('category').value = template.category;
+  document.getElementById('subjective').value = template.subjective;
+  document.getElementById('objective').value = template.objective;
+  document.getElementById('description').value = template.description;
+}
+
+randomizeBtn.addEventListener('click', applyRandomClaimTemplate);
+
 let lastClaimId = null;
 
 claimForm.addEventListener('submit', async (e) => {
