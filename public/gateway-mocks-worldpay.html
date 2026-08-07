@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gateway Mocks</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+      .tab { padding: 8px 16px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
+      .tab:hover { background: #f3f4f6; }
+      .tab.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
+      .config-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 13px; color: #475569; line-height: 1.6; }
+      .config-info code { background: #e2e8f0; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+      .panel-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+      .txn-count-badge { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+
+      /* Cenários — listagem simples */
+      .active-bar { font-size: 13px; color: #475569; margin-bottom: 18px; }
+      .active-bar strong { color: #111827; }
+      .group-title { margin: 22px 0 6px; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; }
+      .scenario-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .scenario-table tr { border-bottom: 1px solid #f1f5f9; }
+      .scenario-table tr:hover { background: #f8fafc; }
+      .scenario-table tr.is-active { background: #f0fdf4; }
+      .scenario-table td { padding: 7px 10px 7px 0; vertical-align: middle; }
+      .scenario-table td.col-name { font-weight: 500; color: #111827; white-space: nowrap; }
+      .scenario-table td.col-code { font-family: 'Fira Mono', monospace; font-size: 12px; color: #6b7280; white-space: nowrap; width: 1%; }
+      .scenario-table td.col-expected { color: #6b7280; font-size: 12px; }
+      .scenario-table td.col-action { text-align: right; white-space: nowrap; width: 1%; }
+      .scenario-table td.col-action button { font-size: 12px; padding: 3px 10px; }
+      .status-text { font-weight: 600; }
+      .status-paid { color: #15803d; }
+      .status-refused { color: #b91c1c; }
+      .status-other { color: #4338ca; }
+      .active-mark { color: #15803d; font-size: 12px; font-weight: 600; }
+      .scenario-code { font-family: 'Fira Mono', monospace; font-size: 12px; color: #6b7280; }
+      .crumb { color: #6b7280; text-decoration: none; font-weight: 400; }
+      .crumb:hover { color: #1d4ed8; text-decoration: underline; }
+
+      /* Histórico */
+      .txn-item { border: 1px solid #e5e7eb; border-radius: 8px; margin: 10px 0; padding: 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+      .txn-item:hover { border-color: #93c5fd; box-shadow: 0 0 0 3px #eff6ff; }
+      .txn-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; color: #6b7280; gap: 8px; flex-wrap: wrap; }
+      .txn-meta { font-size: 12px; color: #9ca3af; }
+
+      /* Modal */
+      .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+      .modal-overlay.open { display: flex; }
+      .modal-box { background: #fff; border-radius: 10px; width: 90vw; max-width: 900px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+      .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+      .modal-header h2 { margin: 0; font-size: 15px; color: #111827; }
+      .modal-close { background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: #6b7280; padding: 2px 6px; border-radius: 4px; }
+      .modal-close:hover { background: #f3f4f6; color: #111827; }
+      .modal-tabs { display: flex; gap: 4px; padding: 10px 20px 0; border-bottom: 1px solid #e5e7eb; }
+      .modal-tab { padding: 6px 14px; border: 1px solid #d1d5db; border-bottom: none; background: #fff; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 13px; }
+      .modal-tab.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; }
+      .modal-body { overflow: auto; padding: 16px 20px; flex: 1; font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 13px; line-height: 1.6; background: #0f172a; color: #e2e8f0; border-radius: 0 0 10px 10px; white-space: pre-wrap; word-break: break-word; }
+      .xml-tag { color: #93c5fd; }
+      .xml-attr { color: #fbbf24; }
+      .xml-val { color: #86efac; }
+      .xml-text { color: #e2e8f0; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1><a href="/gateway-mocks.html" class="crumb">Gateway Mocks</a> / Worldpay</h1>
+          </div>
+
+          <div class="config-info">
+            Aponte <code>WORLDPAY_API_URL=http://svc-inbox_messages/worldpay/paymentService</code> no <code>.env.dev</code> da gateway.
+            O cenário ativo abaixo define a resposta da próxima cobrança — sem reiniciar nada.
+            Para fixar um cenário por URL, use <code>/worldpay/paymentService/&lt;slug&gt;</code>; por request, o header <code>X-Mock-Scenario</code>.
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="scenarios">Catálogo de Testes</button>
+            <button class="tab" data-tab="transactions">Histórico</button>
+          </div>
+
+          <!-- Catálogo -->
+          <div id="panel-scenarios" class="tab-panel active">
+            <div class="active-bar">
+              Cenário ativo: <strong id="active-name">—</strong>
+              <span id="active-slug" class="scenario-code"></span>
+              <span id="status-scenarios" class="status-line"></span>
+            </div>
+            <div id="scenarios-list"></div>
+          </div>
+
+          <!-- Histórico -->
+          <div id="panel-transactions" class="tab-panel">
+            <div class="config-info">
+              Cada chamada recebida da gateway é persistida com headers, XML de request, XML de response, status HTTP e duração.
+            </div>
+            <div class="panel-actions">
+              <button id="refresh-transactions">Atualizar</button>
+              <button id="clear-transactions" class="danger">Limpar histórico</button>
+              <span id="txn-total" class="txn-count-badge">0</span>
+              <span id="status-transactions" class="status-line"></span>
+            </div>
+            <div id="pager-transactions" class="pager" style="margin-bottom:10px">
+              <button id="prev-transactions">Anterior</button>
+              <span id="page-info-transactions">1/1</span>
+              <button id="next-transactions">Próxima</button>
+            </div>
+            <div id="transactions-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal request/response -->
+    <div id="txn-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2 id="txn-modal-title">Chamada</h2>
+          <button class="modal-close" id="txn-modal-close" title="Fechar">&times;</button>
+        </div>
+        <div class="modal-tabs">
+          <button class="modal-tab active" data-view="request">Request (XML)</button>
+          <button class="modal-tab" data-view="response">Response (XML)</button>
+          <button class="modal-tab" data-view="headers">Headers</button>
+        </div>
+        <div class="modal-body" id="txn-modal-body"></div>
+      </div>
+    </div>
+
+    <script src="/gateway-mocks-worldpay.js?v=1"></script>
+  </body>
+</html>

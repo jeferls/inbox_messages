@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Konduto</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      /* Cinza claro para os cards se destacarem do fundo branco da página */
+      .card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .card + .card { margin-top: 16px; }
+      .card h2 { font-size: 15px; margin: 0 0 10px; }
+
+      /* Documentação recolhida: a listagem é o conteúdo principal da tela */
+      details.docs { padding: 0; }
+      details.docs > summary { padding: 14px 20px; cursor: pointer; font-weight: 600; font-size: 14px; color: #374151; list-style-position: inside; }
+      details.docs > summary:hover { color: #111827; }
+      details.docs[open] > summary { border-bottom: 1px solid #e5e7eb; }
+      .summary-text { margin-right: 8px; }
+      /* Estado da flag visível com o bloco fechado */
+      .flag-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; background: #9ca3af; }
+      .flag-dot.on { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18); }
+      .docs-section { padding: 18px 20px; }
+      .docs-section + .docs-section { border-top: 1px solid #e5e7eb; }
+
+      .card p { font-size: 13.5px; line-height: 1.55; color: #374151; margin: 0 0 10px; }
+      .card p:last-child { margin-bottom: 0; }
+
+      .rules-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 4px; }
+      .rules-table th, .rules-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #e5e7eb; }
+      .rules-table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; }
+      .rules-table tr:last-child td { border-bottom: none; }
+      .rules-table code { background: #f3f4f6; border-radius: 4px; padding: 2px 6px; font-size: 12.5px; }
+
+      .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 600; }
+      .pill.approve { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+      .pill.review { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+      .pill.decline { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+      .examples { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+      .examples li { font-size: 12.5px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; background: #fff; }
+
+      .note { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #374151; }
+
+      .flag-state { display: flex; align-items: center; gap: 12px; margin: 14px 0; }
+      .flag-status { font-weight: 700; font-size: 14px; }
+      .flag-status.on { color: #047857; }
+      .flag-status.off { color: #6b7280; }
+
+      .switch { position: relative; display: inline-block; width: 52px; height: 28px; flex-shrink: 0; }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .switch .slider { position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; cursor: pointer; transition: background 0.15s ease; }
+      .switch .slider::before { content: ''; position: absolute; height: 22px; width: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+      .switch input:checked + .slider { background: #16a34a; }
+      .switch input:checked + .slider::before { transform: translateX(24px); }
+      .switch input:disabled + .slider { opacity: 0.55; cursor: progress; }
+      .switch input:focus-visible + .slider { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+      .flag-meta { font-size: 12.5px; color: #6b7280; }
+      .flag-error { color: #b91c1c; font-size: 13px; margin-top: 8px; }
+
+      .modal-body { padding: 16px; font-size: 14px; color: #374151; line-height: 1.55; }
+      .modal-body strong { color: #111827; }
+      .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid #e5e7eb; }
+
+      /* Listagem das análises */
+      .analyses-card { margin-top: 20px; }
+      .analyses-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+      .analyses-head h2 { margin: 0; flex: 1; min-width: 160px; }
+      .analyses-head input[type="search"] { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13.5px; font-family: inherit; min-width: 220px; }
+
+      .tabs { display: flex; gap: 4px; border-bottom: 1px solid #e5e7eb; margin-bottom: 12px; }
+      .tab { display: inline-flex; align-items: center; gap: 7px; border: none; background: none; padding: 9px 14px; border-bottom: 2px solid transparent; border-radius: 0; font-size: 13.5px; font-weight: 600; color: #6b7280; cursor: pointer; margin-bottom: -1px; }
+      .tab:hover { background: #f3f4f6; color: #374151; }
+      .tab.active { color: #1d4ed8; border-bottom-color: #2563eb; }
+      .tab-count { background: #f3f4f6; color: #4b5563; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; font-weight: 600; }
+      .tab.active .tab-count { background: #dbeafe; color: #1d4ed8; }
+
+      .table-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+      .analyses-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .analyses-table th, .analyses-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+      .analyses-table thead th { position: sticky; top: 0; background: #f9fafb; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+      .analyses-table tbody tr:hover { background: #f9fafb; }
+      .analyses-table tbody tr:last-child td { border-bottom: none; }
+      .analyses-table .mono { font-family: ui-monospace, 'Fira Mono', Consolas, monospace; font-size: 12px; }
+      .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+      .row-actions button { padding: 4px 10px; font-size: 12.5px; }
+      .btn-approve { border-color: #16a34a; color: #15803d; }
+      .btn-approve:hover:not(:disabled) { background: #dcfce7; }
+      .btn-decline { border-color: #ef4444; color: #b91c1c; }
+      .btn-decline:hover:not(:disabled) { background: #fee2e2; }
+      .row-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .badge { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 600; border: 1px solid transparent; }
+      .badge.st-approved { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+      .badge.st-pending { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+      .badge.st-blocked { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+      .badge.st-neutral { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+
+      .table-foot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280; }
+      .table-foot .spacer { flex: 1; }
+      .empty-row td { text-align: center; color: #6b7280; padding: 24px; white-space: normal; }
+
+      .webhook-result { margin-top: 12px; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+      .webhook-result.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+      .webhook-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+      .webhook-result pre { margin: 8px 0 0; background: #0b1020; color: #cbd5e1; border-radius: 6px; padding: 10px; overflow: auto; max-height: 30vh; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link active" href="/konduto.html">Konduto</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Konduto</h1>
+          </div>
+
+          <details class="card docs">
+            <summary>
+              <span class="summary-text">Documentação e global flag <code>KONDUTO_ENABLED</code></span>
+              <span id="flagDot" class="flag-dot off" title="Carregando estado da flag..."></span>
+            </summary>
+
+              <section class="docs-section">
+                <h2>Regra dos centavos</h2>
+                <p>
+                  No ambiente de testes a recomendação devolvida pela Konduto é determinada pelos
+                  <strong>centavos do valor total da venda</strong>. Os reais são ignorados: só a parte decimal
+                  decide o resultado. Monte o valor da venda (produto + oferta + frete, o que for cobrado)
+                  para cair na faixa desejada.
+                </p>
+
+                <table class="rules-table">
+                  <thead>
+                    <tr>
+                      <th>Centavos do total</th>
+                      <th>Recomendação</th>
+                      <th>O que acontece</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>R$ _,00</code> a <code>R$ _,29</code></td>
+                      <td><span class="pill approve">approve</span></td>
+                      <td>Aprovar — a venda segue o fluxo normal.</td>
+                    </tr>
+                    <tr>
+                      <td><code>R$ _,30</code> a <code>R$ _,59</code></td>
+                      <td><span class="pill review">review</span></td>
+                      <td>Revisar — a venda fica em análise manual.</td>
+                    </tr>
+                    <tr>
+                      <td><code>R$ _,60</code> a <code>R$ _,99</code></td>
+                      <td><span class="pill decline">decline</span></td>
+                      <td>Negar — a venda é recusada pelo antifraude.</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <ul class="examples">
+                  <li><code>R$ 97,00</code> → aprovar</li>
+                  <li><code>R$ 97,29</code> → aprovar</li>
+                  <li><code>R$ 97,30</code> → revisar</li>
+                  <li><code>R$ 97,59</code> → revisar</li>
+                  <li><code>R$ 97,60</code> → negar</li>
+                  <li><code>R$ 97,99</code> → negar</li>
+                </ul>
+              </section>
+
+              <section class="docs-section">
+                <h2>Antes de testar</h2>
+                <p>
+                  A análise só é disparada quando a flag <code>KONDUTO_ENABLED</code> está ativa para o seller.
+                  Ligando a global flag abaixo, ela passa a valer para <strong>todos os usuários</strong> —
+                  é o atalho para testar sem precisar criar a flag individual do seller.
+                </p>
+                <p class="note">
+                  Para gerar a venda com o valor exato da faixa, ajuste o valor da oferta do produto
+                  até que os centavos caiam na faixa que você quer exercitar.
+                </p>
+              </section>
+
+              <section class="docs-section">
+                <h2>Global flag <code>KONDUTO_ENABLED</code></h2>
+                <p>Liga e desliga a flag direto na tabela <code>global_flags</code> do banco do greenn-back.</p>
+
+                <div class="flag-state">
+                  <label class="switch">
+                    <input id="flagToggle" type="checkbox" disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <span id="flagStatus" class="flag-status off">Carregando...</span>
+                </div>
+
+                <div id="flagMeta" class="flag-meta"></div>
+                <div id="flagError" class="flag-error" hidden></div>
+              </section>
+          </details>
+
+          <section class="card analyses-card">
+            <div class="analyses-head">
+              <h2>Análises (<code>sale_konduto_analysis</code>)</h2>
+              <input id="searchInput" type="search" placeholder="Buscar por order_id ou sale_id" />
+              <button id="reloadBtn" type="button">Atualizar</button>
+            </div>
+
+            <div class="tabs" role="tablist">
+              <button class="tab active" type="button" role="tab" data-group="pending">
+                Pendentes <span class="tab-count" data-count="pending">0</span>
+              </button>
+              <button class="tab" type="button" role="tab" data-group="approved">
+                Aprovados <span class="tab-count" data-count="approved">0</span>
+              </button>
+              <button class="tab" type="button" role="tab" data-group="declined">
+                Reprovados <span class="tab-count" data-count="declined">0</span>
+              </button>
+            </div>
+
+            <p>
+              Aprovar e reprovar disparam <code>POST /konduto/webhook</code> no greenn-back com
+              <code>status: APPROVED</code> e <code>status: DECLINED</code> — a mesma chamada que a Konduto faria.
+              O backend resolve o pedido pela transação pendente: análises sem transação pendente não têm o que processar.
+            </p>
+
+            <div class="table-wrap">
+              <table class="analyses-table">
+                <thead>
+                  <tr>
+                    <th>Venda</th>
+                    <th>Order ID</th>
+                    <th>Status</th>
+                    <th>Recomendação</th>
+                    <th id="actionsHeader"></th>
+                  </tr>
+                </thead>
+                <tbody id="analysesBody">
+                  <tr class="empty-row"><td colspan="5">Carregando...</td></tr>
+                </tbody>
+              </table>
+              <div class="table-foot">
+                <span id="totalLabel">0 análises</span>
+                <div class="spacer"></div>
+                <button id="prevBtn" type="button">Anterior</button>
+                <span id="pageInfo">1/1</span>
+                <button id="nextBtn" type="button">Próxima</button>
+              </div>
+            </div>
+
+            <div id="webhookResult" class="webhook-result" hidden></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmação do toggle -->
+    <div id="confirmModal" class="modal" hidden>
+      <div class="modal-card" style="width: min(100%, 460px);">
+        <div class="modal-header">
+          <strong id="confirmTitle">Confirmar</strong>
+        </div>
+        <div class="modal-body" id="confirmMessage"></div>
+        <div class="modal-footer">
+          <button id="confirmCancelBtn" type="button">Cancelar</button>
+          <button id="confirmOkBtn" type="button">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/konduto.js?v=5"></script>
+  </body>
+</html>

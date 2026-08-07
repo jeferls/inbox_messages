@@ -25,6 +25,28 @@ export const DB_PATH = (process.env.DB_PATH && process.env.DB_PATH.trim()) || DE
 // nos e-mails recebidos, para que o botão do e-mail aponte para o ambiente local)
 export const CLAIM_PAGE_URL = (process.env.CLAIM_PAGE_URL && process.env.CLAIM_PAGE_URL.trim()) || 'http://localhost:6002';
 
+// Chave usada para assinar o header X-Greenn-Gateway das rotas /checkout/* do gateway.
+// O padrão é a chave do ambiente local (CHECKOUT_GATEWAY_KEY do .env.development do new-checkout);
+// para apontar a aba de testes de pagamento para outro ambiente, sobrescreva por variável.
+export const CHECKOUT_GATEWAY_KEY =
+  (process.env.CHECKOUT_GATEWAY_KEY && process.env.CHECKOUT_GATEWAY_KEY.trim()) ||
+  'axyx895259612402ca5e854d0682f5315';
+
+// Banco do greenn-back, usado só para leitura no catálogo de produtos da aba de testes
+// de pagamento (não existe endpoint público que liste produtos por seller).
+export const GREENN_DB = {
+  host: process.env.GREENN_DB_HOST?.trim() || 'greenn-back-mysql',
+  port: Number(process.env.GREENN_DB_PORT || 3306),
+  user: process.env.GREENN_DB_USER?.trim() || 'admin',
+  password: process.env.GREENN_DB_PASSWORD?.trim() || 'secret',
+  database: process.env.GREENN_DB_NAME?.trim() || 'greenn',
+};
+
+// greenn-back visto de dentro da greenn-network (usado para disparar o webhook da Konduto).
+// Do host o mesmo backend responde em http://localhost:81.
+export const GREENN_BACK_URL =
+  (process.env.GREENN_BACK_URL && process.env.GREENN_BACK_URL.trim()) || 'http://greenn-back-nginx';
+
 // Logs
 export const LOG_DIR = (process.env.LOG_DIR && process.env.LOG_DIR.trim()) || path.join(__dirname, '..', '..', 'logs');
 export const LOG_FILE = (process.env.LOG_FILE && process.env.LOG_FILE.trim()) || path.join(LOG_DIR, 'app.log');

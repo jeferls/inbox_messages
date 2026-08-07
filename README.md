@@ -209,9 +209,59 @@ Equals API Mock
   - Permite editar as 4 listas (adquirentes, bandeiras, formas de pagamento, meios de captura) via textarea JSON
   - Visualizar e limpar as transações recebidas com paginação
 
+Worldpay Mock (charge)
+- Substitui a API XML da Worldpay (WPG `paymentService`) para testar cenários de recusa no fluxo de
+  charge da gateway, sem depender do sandbox real. Cada cenário do catálogo devolve um XML específico.
+
+- Configuração na gateway (`gateway/.env.dev`):
+  - `WORLDPAY_API_URL=http://svc-inbox_messages/worldpay/paymentService` (container-to-container, ambos na `greenn-network`)
+  - Ou, para fixar um cenário por URL: `.../worldpay/paymentService/fraud`
+  - Mantenha `WORLDPAY_MOCK_CHARGE_ENABLED=false` — o mock aqui substitui a API, não o código da gateway.
+
+- Como escolher o cenário (precedência):
+  1. Rota — `POST /worldpay/paymentService/:scenario`
+  2. Header — `X-Mock-Scenario: Teste Fraud`
+  3. Cenário ativo — definido via `PUT /api/gateway-mocks/worldpay/active`
+  4. Padrão — `authorised`
+
+  O nome é aceito em qualquer forma: `Teste Fraud`, `teste-fraud`, `FRAUD` ou `fraud`.
+
+- Endpoints:
+  - `POST /worldpay/paymentService` — recebe o XML da gateway e devolve o XML do cenário
+  - `POST /worldpay/paymentService/:scenario` — idem, fixando o cenário pela URL
+  - `GET /api/gateway-mocks/worldpay/scenarios` — catálogo completo, com o resultado esperado de cada teste
+  - `GET /api/gateway-mocks/worldpay/active` — cenário ativo
+  - `PUT /api/gateway-mocks/worldpay/active` — define o ativo (corpo: `{ "scenario": "Teste Fraud" }`)
+  - `GET /api/gateway-mocks/worldpay/transactions` — request e response persistidos (query: `limit`, `offset`, `scenario`)
+  - `DELETE /api/gateway-mocks/worldpay/transactions` — limpa o histórico
+
+- Tipos de cenário:
+  - `iso8583` — `lastEvent REFUSED` + `ISO8583ReturnCode` (recusa do emissor)
+  - `last_event` — `lastEvent` arbitrário (`AUTHORISED`, `CANCELLED`, `EXPIRED`, `ERROR`, ...)
+  - `gateway_error` — `<reply><error code="N">` sem `orderStatus`
+  - `http_error` — resposta HTTP não-2xx
+  - `timeout` — segura a resposta além do timeout da gateway (vira `GATEWAY_TIMEOUT` 504)
+
+- Exemplo:
+  ```bash
+  curl -X PUT http://localhost:8115/api/gateway-mocks/worldpay/active \
+    -H 'Content-Type: application/json' -d '{"scenario":"Teste Fraud"}'
+
+  # a próxima cobrança na gateway volta REFUSED / 34 - FRAUD SUSPICION
+  curl http://localhost:8115/api/gateway-mocks/worldpay/transactions?limit=1
+  ```
+
+- Arquivos:
+  - `src/mocks/worldpay/scenarios.js` — catálogo (adicionar cenário é adicionar item nesse array)
+  - `src/mocks/worldpay/response-builder.js` — montagem do XML por tipo de cenário
+  - `src/mocks/worldpay/request-parser.js` — extrai orderCode/amount/parcelas do XML recebido
+  - `src/controllers/worldpay-mock.controller.js`, `src/routes/worldpay-mock.routes.js`
+
 Persistência (SQLite)
 - Em Docker, o banco é salvo no volume `inbox_data` montado em `/data` dentro do container.
 - Localmente (sem Docker), o arquivo padrão é `data.db` na raiz do projeto.
+- Tabelas dos mocks de gateway: `gateway_mock_state` (cenário ativo por gateway) e
+  `gateway_mock_transactions` (request e response de cada chamada, com headers, status e duração).
 
 Comandos Úteis (Makefile)
 - `make up`     — sobe stack com build e garante rede `greenn-network`.

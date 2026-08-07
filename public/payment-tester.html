@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Testes de Pagamento</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .pay-grid { display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 20px; align-items: start; }
+      .claim-form { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .claim-form label { display: block; font-weight: 600; font-size: 13px; margin: 14px 0 6px; }
+      .claim-form label:first-of-type { margin-top: 0; }
+      .claim-form input[type="text"],
+      .claim-form input[type="number"],
+      .claim-form select {
+        width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+        font-family: inherit; font-size: 14px; background: #fff;
+      }
+      .claim-form .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
+      .form-actions { margin-top: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .json-edit { width: 100%; min-height: 320px; font-family: ui-monospace, 'Fira Mono', Consolas, monospace; font-size: 12.5px; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; resize: vertical; }
+      .json-error { color: #b91c1c; font-size: 12px; margin-top: 4px; }
+      .env-fieldset { border: none; margin: 0; padding: 0; }
+      .env-fieldset legend { font-weight: 600; font-size: 13px; padding: 0; margin-bottom: 6px; }
+      .env-toggle { display: inline-flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+      .claim-form .env-option { display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin: 0; cursor: pointer; font-size: 14px; font-weight: normal; color: #374151; background: #fff; }
+      .env-option:not(:last-child) { border-right: 1px solid #d1d5db; }
+      .env-option input { margin: 0; }
+      .env-option.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+      body.env-staging-active .app-content { background: #fca5a5; }
+      .warn-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
+      .config-info { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; color: #374151; }
+
+      .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .field-row > div { min-width: 0; }
+      .field-row label { margin-top: 14px; }
+
+      details.advanced { margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+      details.advanced summary { cursor: pointer; font-weight: 600; font-size: 13px; color: #374151; }
+
+      .product-badge { margin-top: 10px; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+      .product-badge.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+      .product-badge.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+      .steps { display: flex; flex-direction: column; gap: 10px; }
+      .step { border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; overflow: hidden; }
+      .step-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+      .step-head:hover { background: #f9fafb; }
+      .step-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+      .step-dot.ok { background: #16a34a; }
+      .step-dot.err { background: #dc2626; }
+      .step-name { font-weight: 600; font-size: 13px; text-transform: capitalize; }
+      .step-url { color: #6b7280; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+      .step-meta { color: #6b7280; font-size: 12px; flex-shrink: 0; }
+      .step-body { border-top: 1px solid #e5e7eb; background: #0b1020; color: #cbd5e1; padding: 12px; overflow: auto; max-height: 46vh; font-size: 12px; white-space: pre-wrap; word-break: break-word; margin: 0; }
+
+      .verdict { border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+      .verdict.ok { background: #ecfdf5; border: 1px solid #a7f3d0; }
+      .verdict.err { background: #fef2f2; border: 1px solid #fecaca; }
+      .verdict-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+      .verdict.ok .verdict-title { color: #065f46; }
+      .verdict.err .verdict-title { color: #991b1b; }
+      .verdict-sub { font-size: 13px; color: #374151; }
+
+      .placeholder { color: #6b7280; font-size: 14px; border: 1px dashed #d1d5db; border-radius: 10px; padding: 28px; text-align: center; }
+
+      @media (max-width: 1100px) { .pay-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Testes de Pagamento</h1>
+          </div>
+
+          <div class="config-info">
+            Executa um pagamento de checkout inteiro por API, sem abrir o navegador e sem preencher formulário.
+            Reproduz os três passos que o new-checkout faz:
+            <code>GET /product/test-checkout</code> (traz os tokens anti-bot) →
+            <code>POST /checkout/priority</code> (escolhe o gateway e tokeniza o cartão) →
+            <code>POST /payment</code>.
+          </div>
+
+          <div class="warn-box">
+            Atenção: isto cria vendas de verdade no ambiente selecionado. Em Local o resultado depende do
+            cenário ativo em <a href="/gateway-mocks.html">Gateway Mocks</a>.
+          </div>
+
+          <div class="pay-grid">
+            <form id="paymentForm" class="claim-form">
+              <fieldset class="env-fieldset">
+                <legend>Ambiente</legend>
+                <div class="env-toggle">
+                  <label class="env-option active">
+                    <input type="radio" name="envTarget" value="local" checked /> Local
+                  </label>
+                  <label class="env-option">
+                    <input type="radio" name="envTarget" value="staging" /> Staging
+                  </label>
+                </div>
+              </fieldset>
+
+              <label for="sellerId">User ID (seller)</label>
+              <div class="field-row">
+                <div>
+                  <input id="sellerId" type="text" placeholder="ex.: 600810" />
+                </div>
+                <div>
+                  <button type="button" id="listProductsBtn" style="width: 100%">Listar produtos</button>
+                </div>
+              </div>
+              <div class="hint">
+                Lê os produtos do seller direto do banco do greenn-back, do mais recente para o mais antigo.
+                Disponível só no ambiente Local.
+              </div>
+              <div id="sellerBadge" class="product-badge" hidden></div>
+
+              <label for="productSelect">Produto</label>
+              <select id="productSelect" disabled>
+                <option value="">Liste os produtos de um seller…</option>
+              </select>
+              <div class="hint">
+                Produtos que não são <strong>TRANSACTION</strong> aparecem na lista, mas ficam desabilitados —
+                a ferramenta só executa compra avulsa.
+              </div>
+
+              <label for="offerSelect">Oferta</label>
+              <select id="offerSelect" disabled>
+                <option value="">Selecione um produto…</option>
+              </select>
+
+              <div class="field-row">
+                <div>
+                  <label for="productId">Produto (id ou nano_id)</label>
+                  <input id="productId" type="text" value="54207" />
+                </div>
+                <div>
+                  <label for="offerHash">Oferta (hash)</label>
+                  <input id="offerHash" type="text" value="C8w6P7UQhZo9Tsra" />
+                </div>
+              </div>
+              <div class="hint">
+                Preenchidos pelos selects acima; edite à mão se quiser apontar para algo que não está na lista.
+              </div>
+              <div class="form-actions">
+                <button type="button" id="loadProductBtn">Carregar produto</button>
+                <span id="loadStatusLine" class="status-line"></span>
+              </div>
+              <div id="productBadge" class="product-badge" hidden></div>
+
+              <label for="method">Método</label>
+              <select id="method">
+                <option value="CREDIT_CARD">CREDIT_CARD</option>
+                <option value="PIX">PIX</option>
+                <option value="BOLETO">BOLETO</option>
+                <option value="TWO_CREDIT_CARDS">TWO_CREDIT_CARDS</option>
+                <option value="DEBIT_CARD">DEBIT_CARD</option>
+                <option value="FREE">FREE</option>
+              </select>
+
+              <div class="field-row">
+                <div>
+                  <label for="amount">Valor</label>
+                  <input id="amount" type="number" step="0.01" value="100" />
+                </div>
+                <div>
+                  <label for="installments">Parcelas</label>
+                  <input id="installments" type="number" min="1" max="12" value="1" />
+                </div>
+              </div>
+              <div class="hint">
+                O valor precisa bater com o da oferta — “Carregar produto” preenche o valor certo.
+                Divergência faz o gateway responder erro sem explicar o motivo.
+              </div>
+
+              <div id="cardFields">
+                <label for="cardPreset">Cartão de teste</label>
+                <select id="cardPreset">
+                  <option value="visa">Visa — 4111 1111 1111 1111</option>
+                  <option value="master">Mastercard — 5555 5555 5555 4444</option>
+                  <option value="custom">Personalizado</option>
+                </select>
+
+                <div class="field-row">
+                  <div>
+                    <label for="cardNumber">Número</label>
+                    <input id="cardNumber" type="text" value="4111111111111111" />
+                  </div>
+                  <div>
+                    <label for="cardCvv">CVV</label>
+                    <input id="cardCvv" type="text" value="123" />
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div>
+                    <label for="cardMonth">Mês</label>
+                    <input id="cardMonth" type="text" value="12" />
+                  </div>
+                  <div>
+                    <label for="cardYear">Ano</label>
+                    <input id="cardYear" type="text" value="2030" />
+                  </div>
+                </div>
+                <label for="cardHolder">Portador</label>
+                <input id="cardHolder" type="text" value="JOAO SILVA" />
+              </div>
+
+              <details class="advanced">
+                <summary>Cliente</summary>
+                <div class="field-row">
+                  <div>
+                    <label for="clientName">Nome</label>
+                    <input id="clientName" type="text" value="Joao Silva" />
+                  </div>
+                  <div>
+                    <label for="clientDocument">Documento</label>
+                    <input id="clientDocument" type="text" value="123.456.789-00" />
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div>
+                    <label for="clientEmail">E-mail</label>
+                    <input id="clientEmail" type="text" value="teste@example.com" />
+                  </div>
+                  <div>
+                    <label for="clientPhone">Celular</label>
+                    <input id="clientPhone" type="text" value="+5511987654321" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" id="randomClientBtn">Gerar cliente aleatório</button>
+                </div>
+              </details>
+
+              <details class="advanced">
+                <summary>Cenário do gateway (mock local)</summary>
+                <label for="worldpayScenario">Worldpay</label>
+                <select id="worldpayScenario">
+                  <option value="">Não alterar</option>
+                </select>
+                <div class="hint">
+                  Aplicado logo antes de disparar o pagamento. Só faz efeito no ambiente Local, onde o gateway
+                  aponta para o mock desta ferramenta.
+                </div>
+              </details>
+
+              <details class="advanced">
+                <summary>Endpoints</summary>
+                <label for="backUrl">greenn-back</label>
+                <input id="backUrl" type="text" value="http://greenn-back-nginx" />
+                <div class="hint">O caminho <code>/api/...</code> é adicionado automaticamente.</div>
+
+                <label for="gatewayUrl">gateway</label>
+                <input id="gatewayUrl" type="text" value="http://gateway-nginx" />
+
+                <label for="gatewayKey">CHECKOUT_GATEWAY_KEY</label>
+                <input id="gatewayKey" type="text" placeholder="usa a chave local do servidor" />
+                <div class="hint">Deixe vazio para usar a chave configurada no servidor.</div>
+
+                <label class="inline" style="margin-top: 14px">
+                  <input id="skipPriority" type="checkbox" /> Pular o priority gateway
+                </label>
+                <div class="hint">
+                  Dispara o <code>POST /payment</code> direto com o payload como está. Útil para replicar um
+                  payload já capturado, com o cartão já tokenizado.
+                </div>
+              </details>
+
+              <label for="payloadJson">Payload do <code>POST /payment</code></label>
+              <textarea id="payloadJson" class="json-edit" spellcheck="false"></textarea>
+              <div class="hint">
+                Gerado a partir dos campos acima. Edite à vontade para testar cupom, order bump, endereço,
+                assinatura — é este JSON que será enviado. O <code>gateway</code>, o <code>parent_id</code> e os
+                cartões tokenizados são preenchidos com a resposta do priority.
+              </div>
+              <div id="jsonError" class="json-error" hidden>JSON inválido — corrija antes de enviar.</div>
+
+              <div class="form-actions">
+                <button type="submit" id="runBtn">Executar pagamento</button>
+                <button type="button" id="resetPayloadBtn">Regerar payload</button>
+                <span id="runStatusLine" class="status-line"></span>
+              </div>
+            </form>
+
+            <div>
+              <div id="verdict" class="verdict" hidden>
+                <div id="verdictTitle" class="verdict-title"></div>
+                <div id="verdictSub" class="verdict-sub"></div>
+              </div>
+              <div id="steps" class="steps"></div>
+              <div id="placeholder" class="placeholder">
+                O resultado de cada passo aparece aqui depois de executar.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/payment-tester.js"></script>
+  </body>
+</html>

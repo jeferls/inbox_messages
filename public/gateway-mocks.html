@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gateway Mocks</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .intro { font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 20px; max-width: 760px; }
+      .intro code { background: #f1f5f9; border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+
+      .url-block { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 12px 16px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 12.5px; line-height: 1.9; margin-bottom: 24px; overflow-x: auto; }
+      .url-block .c { color: #64748b; }
+      .url-block .k { color: #93c5fd; }
+      .url-block .v { color: #86efac; }
+
+      .group-title { margin: 22px 0 6px; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; }
+
+      .gateway-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .gateway-table tr { border-bottom: 1px solid #f1f5f9; }
+      .gateway-table tr:hover { background: #f8fafc; }
+      .gateway-table td { padding: 10px 10px 10px 0; vertical-align: middle; }
+      .gateway-table td.col-name { font-weight: 600; color: #111827; white-space: nowrap; width: 1%; }
+      .gateway-table td.col-name a { color: #1d4ed8; text-decoration: none; }
+      .gateway-table td.col-name a:hover { text-decoration: underline; }
+      .gateway-table td.col-desc { color: #6b7280; font-size: 12px; }
+      .gateway-table td.col-state { text-align: right; white-space: nowrap; width: 1%; font-size: 12px; }
+      .state-ready { color: #15803d; font-weight: 600; }
+      .state-todo { color: #9ca3af; }
+      .gateway-table tr.is-todo td.col-name { color: #9ca3af; font-weight: 500; }
+      .active-note { font-size: 12px; color: #6b7280; margin-top: 2px; }
+      .active-note strong { color: #15803d; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes</a>
+          <a class="sidebar-link" href="/receivables.html">Receivables</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Gateway Mocks</h1>
+          </div>
+
+          <div class="intro">
+            Substitui a API do gateway durante os testes locais: cada cenário do catálogo devolve uma resposta
+            específica — recusa, erro do gateway, timeout — no mesmo formato da API real.
+            Basta apontar a URL do gateway para cá e escolher o cenário; a request e a response de cada chamada
+            ficam registradas no histórico.
+          </div>
+
+          <div class="url-block">
+<span class="c"># gateway/.env.dev — container-to-container, ambos na greenn-network</span>
+<span class="k">WORLDPAY_API_URL</span>=<span class="v">http://svc-inbox_messages/worldpay/paymentService</span>
+
+<span class="c"># fixando um cenário direto na URL (ignora o cenário ativo)</span>
+<span class="k">WORLDPAY_API_URL</span>=<span class="v">http://svc-inbox_messages/worldpay/paymentService/fraud</span>
+
+<span class="c"># ou, por request, sem mexer no .env</span>
+<span class="k">X-Mock-Scenario</span>: <span class="v">Teste Fraud</span>
+          </div>
+
+          <div class="group-title">Gateways</div>
+          <table class="gateway-table">
+            <tbody>
+              <tr>
+                <td class="col-name"><a href="/gateway-mocks-worldpay.html">Worldpay</a></td>
+                <td class="col-desc">
+                  XML <code>paymentService</code> (WPG) — 26 cenários de charge
+                  <div class="active-note" id="worldpay-active"></div>
+                </td>
+                <td class="col-state"><span class="state-ready">disponível</span></td>
+              </tr>
+              <tr class="is-todo">
+                <td class="col-name">Cielo</td>
+                <td class="col-desc">JSON <code>/1/sales</code> — a construir</td>
+                <td class="col-state"><span class="state-todo">em construção</span></td>
+              </tr>
+              <tr class="is-todo">
+                <td class="col-name">Pagar.me</td>
+                <td class="col-desc">JSON API V5 <code>/core/v5/orders</code> — a construir</td>
+                <td class="col-state"><span class="state-todo">em construção</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Mostra o cenário ativo do Worldpay direto na listagem, sem precisar entrar na página.
+      fetch('/api/gateway-mocks/worldpay/scenarios')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!data) return;
+          const active = data.scenarios.find((s) => s.slug === data.active);
+          document.getElementById('worldpay-active').innerHTML =
+            `cenário ativo: <strong>${active ? active.name : data.active}</strong>`;
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

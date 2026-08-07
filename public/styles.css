@@ -21,6 +21,9 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-seri
 .sidebar-link { display: flex; align-items: center; padding: 9px 10px; border-radius: 8px; color: #cbd5e1; text-decoration: none; font-size: 14px; }
 .sidebar-link:hover { background: #1f2937; color: #fff; }
 .sidebar-link.active { background: #2563eb; color: #fff; font-weight: 600; }
+/* Aba desabilitada: fica visível na navegação, mas sem link */
+.sidebar-link.disabled { color: #6b7280; opacity: 0.6; cursor: not-allowed; text-decoration: line-through; }
+.sidebar-link.disabled:hover { background: transparent; color: #6b7280; }
 .app-content { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 100vh; }
 
 @media (max-width: 800px) {

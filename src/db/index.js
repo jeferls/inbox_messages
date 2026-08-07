@@ -59,6 +59,36 @@ export async function dbInit() {
     )
   `);
 
+  // Mocks de gateway: cenário ativo por gateway e histórico de request/response.
+  await run(`
+    CREATE TABLE IF NOT EXISTS gateway_mock_state (
+      gateway TEXT PRIMARY KEY,
+      scenario TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS gateway_mock_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      gateway TEXT NOT NULL,
+      scenario TEXT NOT NULL,
+      scenario_source TEXT NOT NULL,
+      reference TEXT,
+      amount TEXT,
+      currency TEXT,
+      installments TEXT,
+      request_headers TEXT NOT NULL,
+      request_body TEXT NOT NULL,
+      response_status INTEGER NOT NULL,
+      response_body TEXT NOT NULL,
+      duration_ms INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  await run(`CREATE INDEX IF NOT EXISTS idx_gateway_mock_tx_gateway ON gateway_mock_transactions (gateway, id DESC)`);
+
   await seedEqualsDefaults();
 }
 
@@ -571,5 +601,110 @@ export async function listEqualsReceivedTransactions({ limit = 20, offset = 0 } 
 
 export async function clearEqualsReceivedTransactions() {
   const result = await run(`DELETE FROM equals_received_transactions`);
+  return result?.changes ?? 0;
+}
+
+// ─── Mocks de gateway ────────────────────────────────────────────────────────
+
+export async function getGatewayMockScenario(gateway) {
+  const row = await get(`SELECT scenario FROM gateway_mock_state WHERE gateway = ?`, [gateway]);
+  return row?.scenario ?? null;
+}
+
+export async function setGatewayMockScenario(gateway, scenario) {
+  await run(
+    `INSERT INTO gateway_mock_state (gateway, scenario, updated_at)
+     VALUES (?, ?, datetime('now'))
+     ON CONFLICT(gateway) DO UPDATE SET scenario = excluded.scenario, updated_at = excluded.updated_at`,
+    [gateway, scenario]
+  );
+  return getGatewayMockScenario(gateway);
+}
+
+export async function insertGatewayMockTransaction({
+  gateway,
+  scenario,
+  scenarioSource,
+  reference = null,
+  amount = null,
+  currency = null,
+  installments = null,
+  requestHeaders,
+  requestBody,
+  responseStatus,
+  responseBody,
+  durationMs = null,
+}) {
+  const res = await run(
+    `INSERT INTO gateway_mock_transactions
+       (gateway, scenario, scenario_source, reference, amount, currency, installments,
+        request_headers, request_body, response_status, response_body, duration_ms)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      gateway,
+      scenario,
+      scenarioSource,
+      reference,
+      amount,
+      currency,
+      installments,
+      JSON.stringify(requestHeaders ?? {}),
+      requestBody ?? '',
+      Number(responseStatus),
+      responseBody ?? '',
+      durationMs == null ? null : Number(durationMs),
+    ]
+  );
+  return { id: res.lastID };
+}
+
+export async function listGatewayMockTransactions({ gateway, limit = 20, offset = 0, scenario } = {}) {
+  const where = [];
+  const params = [];
+
+  if (gateway) {
+    where.push('gateway = ?');
+    params.push(gateway);
+  }
+  if (scenario) {
+    where.push('scenario = ?');
+    params.push(scenario);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const totalRow = await get(`SELECT COUNT(*) as count FROM gateway_mock_transactions ${whereSql}`, params);
+  const rows = await all(
+    `SELECT id, gateway, scenario, scenario_source, reference, amount, currency, installments,
+            request_headers, request_body, response_status, response_body, duration_ms, created_at
+       FROM gateway_mock_transactions ${whereSql}
+      ORDER BY id DESC LIMIT ? OFFSET ?`,
+    [...params, Number(limit), Number(offset)]
+  );
+
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      gateway: r.gateway,
+      scenario: r.scenario,
+      scenarioSource: r.scenario_source,
+      reference: r.reference,
+      amount: r.amount,
+      currency: r.currency,
+      installments: r.installments,
+      requestHeaders: parseJsonOrNull(r.request_headers),
+      requestBody: r.request_body,
+      responseStatus: r.response_status,
+      responseBody: r.response_body,
+      durationMs: r.duration_ms,
+      createdAt: r.created_at,
+    })),
+    total: totalRow?.count ?? 0,
+  };
+}
+
+export async function clearGatewayMockTransactions(gateway) {
+  const result = gateway
+    ? await run(`DELETE FROM gateway_mock_transactions WHERE gateway = ?`, [gateway])
+    : await run(`DELETE FROM gateway_mock_transactions`);
   return result?.changes ?? 0;
 }
