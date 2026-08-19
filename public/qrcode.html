@@ -19,7 +19,10 @@
       /* Coluna do QR */
       .qr-card { text-align: center; position: sticky; top: 16px; }
       .qr-card img { image-rendering: pixelated; border: 1px solid #e5e7eb; border-radius: 8px; max-width: 100%; }
-      .qr-url { margin-top: 10px; font-size: 12.5px; word-break: break-all; }
+      .qr-target { background: #0b1020; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; text-align: left; }
+      .qr-target-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+      .qr-target-name { color: #fff; font-size: 14px; font-weight: 600; margin: 3px 0 4px; }
+      .qr-target-url { display: block; color: #7dd3fc; font-size: 12px; word-break: break-all; font-family: ui-monospace, 'Fira Mono', Consolas, monospace; }
       .qr-status { font-size: 12px; color: #6b7280; margin-top: 6px; }
       .qr-status.err { color: #b91c1c; }
       .qr-card .form-actions { justify-content: center; }
@@ -39,6 +42,14 @@
       /* Card do comando */
       .cmd-card { background: #eff6ff; border-color: #bfdbfe; }
       .cmd-card h2 { color: #1d4ed8; }
+
+      /* Card de compra — ação principal da tela */
+      .buy-card { background: #ecfdf5; border-color: #86efac; }
+      .buy-card h2 { color: #15803d; font-size: 15px; }
+      .buy-card .card-sub, .buy-card .note { color: #3f6212; }
+      .buy-card select, .buy-card input { border-color: #a7f3d0; background: #fff; }
+      .buy-card button { background: #15803d; border-color: #15803d; color: #fff; }
+      .buy-card button:hover { background: #166534; border-color: #166534; }
       .cmd-line { display: flex; align-items: center; gap: 10px; background: #0b1020; border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
       .cmd-line code { flex: 1; color: #cbd5e1; font-family: ui-monospace, 'Fira Mono', Consolas, monospace; font-size: 13px; word-break: break-all; }
       .cmd-line button { flex: none; padding: 5px 10px; font-size: 12px; }
@@ -99,12 +110,17 @@
             <!-- Coluna esquerda: o QR em si -->
             <div>
               <div class="card qr-card">
+                <div class="qr-target">
+                  <div class="qr-target-label">Este QR aponta para</div>
+                  <div class="qr-target-name" id="qrTargetName">—</div>
+                  <a class="qr-target-url" id="qrLink" href="#" target="_blank" rel="noopener" aria-label="URL do QR Code">—</a>
+                </div>
                 <img id="qrImg" alt="QR Code" width="300" height="300" />
-                <div class="qr-url"><a id="qrLink" href="#" target="_blank" rel="noopener"></a></div>
                 <div class="qr-status" id="status">Aponte a câmera do celular (mesma rede Wi-Fi).</div>
                 <div class="form-actions">
                   <button type="button" id="copyBtn">Copiar URL</button>
                   <button type="button" id="openBtn">Abrir</button>
+                  <button type="button" id="resetBtn" title="Volta aos valores padrão e limpa o que está salvo no navegador">Resetar</button>
                 </div>
               </div>
             </div>
@@ -143,7 +159,7 @@
                 </details>
               </div>
 
-              <div class="card">
+              <div class="card buy-card">
                 <div class="card-head">
                   <div>
                     <h2>Comprar no checkout</h2>

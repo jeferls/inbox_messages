@@ -36,6 +36,26 @@ async function detectHost() {
   return '';
 }
 
+const SERVICE_BY_PORT = {
+  8080: 'greenn-adm',
+  81: 'greenn-back (API)',
+  82: 'gateway',
+  3000: 'new-checkout',
+  8115: 'Greenn Tools',
+  6002: 'claim-page',
+};
+
+// Nome legivel do destino: servico pela porta e, quando for uma oferta, o produto
+function targetName(url) {
+  let parsed;
+  try { parsed = new URL(url); } catch { return '—'; }
+  const service = SERVICE_BY_PORT[parsed.port] || `porta ${parsed.port || '80'}`;
+  const offerLabel = offerEl.selectedIndex > 0 ? offerEl.options[offerEl.selectedIndex].textContent : '';
+  if (parsed.port === '3000' && offerLabel) return `${service} — ${offerLabel}`;
+  const path = parsed.pathname !== '/' ? ` — ${parsed.pathname}` : '';
+  return service + path;
+}
+
 async function generate() {
   const url = urlEl.value.trim();
   const statusEl = $('status');
@@ -43,8 +63,11 @@ async function generate() {
     statusEl.textContent = 'Informe o IP/host da máquina na rede local.';
     statusEl.className = 'qr-status err';
     $('qrImg').removeAttribute('src');
+    $('qrTargetName').textContent = '—';
+    $('qrLink').textContent = '—';
     return;
   }
+  $('qrTargetName').textContent = targetName(url);
   localStorage.setItem(LS_HOST, hostEl.value.trim());
   $('qrImg').src = `/api/qrcode.png?size=320&text=${encodeURIComponent(url)}`;
   $('qrLink').href = url;
@@ -118,7 +141,9 @@ async function loadOffers() {
       opt.value = `${o.product_id}?offer=${o.hash}`;
       const price = Number(o.amount);
       const tag = o.is_default ? ' (padrão)' : '';
-      opt.textContent = `[${o.product_id}] ${o.product_name} • ${o.offer_name}${tag} • R$ ${Number.isFinite(price) ? price.toFixed(2) : o.amount}`;
+      // produtos fora de APPROVED (REVISION, etc.) abrem no checkout, mas convem sinalizar
+      const status = o.product_status && o.product_status !== 'APPROVED' ? ` [${o.product_status}]` : '';
+      opt.textContent = `[${o.product_id}]${status} ${o.product_name} • ${o.offer_name}${tag} • R$ ${Number.isFinite(price) ? price.toFixed(2) : o.amount}`;
       offerEl.append(opt);
     }
     offerEl.disabled = false;
@@ -154,6 +179,28 @@ $('openBtn').addEventListener('click', () => {
   const url = urlEl.value.trim();
   if (url) window.open(url, '_blank', 'noopener');
 });
+
+// Volta tudo ao padrao: descarta o que ficou salvo no navegador e redetecta o IP
+async function resetToDefaults() {
+  [LS_HOST, LS_SELLER, LS_PRODUCT].forEach((k) => localStorage.removeItem(k));
+  targetEl.value = '8080';
+  portEl.value = '8080';
+  pathEl.value = '';
+  urlEl.value = '';
+  urlManual = false;
+  sellerEl.value = '';
+  productEl.value = '';
+  offerEl.disabled = true;
+  setOfferPlaceholder('— informe o seller_id —');
+  $('devModel').value = '390x844';
+  $('cfgBox').open = false;
+  hostEl.value = await detectHost();
+  syncUrl();
+  generate();
+  $('status').textContent = 'Valores padrão restaurados.';
+}
+
+$('resetBtn').addEventListener('click', resetToDefaults);
 
 // ── Preview no celular (abre em aba nova) ───────────────────────────────────
 // A aba e servida pelo host do alvo: assim o wrapper e o app ficam no mesmo site

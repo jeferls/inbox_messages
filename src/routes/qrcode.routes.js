@@ -47,7 +47,6 @@ router.get('/qrcode/checkout-offers', async (req, res) => {
          FROM products_has_offers o
          JOIN products p ON p.id = o.product_id AND p.deleted_at IS NULL
         WHERE o.deleted_at IS NULL
-          AND p.status = 'APPROVED'
           AND p.seller_id = ?
           ${hasProductFilter ? 'AND p.id = ?' : ''}
         ORDER BY p.id DESC, o.id DESC
