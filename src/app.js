@@ -21,6 +21,7 @@ import paymentTesterRoutes from './routes/payment-tester.routes.js';
 import kondutoRoutes from './routes/konduto.routes.js';
 import qrcodeRoutes from './routes/qrcode.routes.js';
 import dockerRoutes from './routes/docker.routes.js';
+import embedCheckRoutes from './routes/embed-check.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,6 +95,7 @@ app.use('/api', paymentTesterRoutes);
 app.use('/api', kondutoRoutes);
 app.use('/api', qrcodeRoutes);
 app.use('/api', dockerRoutes);
+app.use('/api', embedCheckRoutes);
 app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);
 app.use('/', receivableDirectRoutes);

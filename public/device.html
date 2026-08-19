@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview no celular</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+        gap: 14px; padding: 18px 12px; background: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+      .bar select, .bar button {
+        padding: 6px 10px; font-size: 12px; font-family: inherit; border-radius: 6px;
+        border: 1px solid #334155; background: #1e293b; color: #e2e8f0; cursor: pointer;
+      }
+      .bar button:hover, .bar select:hover { background: #334155; }
+      .phone {
+        position: relative; background: #1e293b; border: 2px solid #475569; border-radius: 42px;
+        padding: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); flex: none;
+      }
+      .phone::before {
+        content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+        width: 104px; height: 22px; border-radius: 12px; background: #0f172a; z-index: 2;
+      }
+      .phone::after {
+        content: ''; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+        width: 108px; height: 4px; border-radius: 3px; background: #64748b; z-index: 2;
+      }
+      .screen { border-radius: 30px; overflow: hidden; background: #fff; }
+      .screen iframe { display: block; border: 0; }
+      .info { color: #94a3b8; font-size: 12px; text-align: center; word-break: break-all; max-width: 90vw; }
+      .warn { color: #fca5a5; font-size: 12px; text-align: center; max-width: 460px; line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <select id="model" aria-label="Modelo do dispositivo">
+                    <optgroup label="iPhone">
+                      <option value="320x568">iPhone 5/SE (1ª) — 320×568</option>
+                      <option value="375x667">iPhone SE (2ª/3ª) — 375×667</option>
+                      <option value="375x812">iPhone X/XS/11 Pro — 375×812</option>
+                      <option value="390x844" selected>iPhone 12/13/14 — 390×844</option>
+                      <option value="393x852">iPhone 15/16 — 393×852</option>
+                      <option value="414x896">iPhone XR/11 — 414×896</option>
+                      <option value="428x926">iPhone 12/13/14 Pro Max — 428×926</option>
+                      <option value="430x932">iPhone 15/16 Pro Max — 430×932</option>
+                      <option value="440x956">iPhone 16 Pro Max — 440×956</option>
+                    </optgroup>
+                    <optgroup label="Android">
+                      <option value="360x640">Galaxy S5 / genérico — 360×640</option>
+                      <option value="360x740">Galaxy S8+ — 360×740</option>
+                      <option value="360x780">Galaxy S22 — 360×780</option>
+                      <option value="384x854">Galaxy S24 — 384×854</option>
+                      <option value="412x915">Galaxy S20 Ultra / Pixel 7 — 412×915</option>
+                      <option value="412x892">Galaxy A51/A71 — 412×892</option>
+                      <option value="393x851">Pixel 5 — 393×851</option>
+                      <option value="412x883">Pixel 8 — 412×883</option>
+                      <option value="448x998">Pixel 8 Pro — 448×998</option>
+                      <option value="393x873">Redmi Note 12 — 393×873</option>
+                      <option value="412x823">Moto G Power — 412×823</option>
+                      <option value="344x882">Galaxy Z Flip (fechado) — 344×882</option>
+                    </optgroup>
+                    <optgroup label="Tablets">
+                      <option value="768x1024">iPad mini / iPad — 768×1024</option>
+                      <option value="820x1180">iPad Air — 820×1180</option>
+                      <option value="834x1194">iPad Pro 11" — 834×1194</option>
+                      <option value="1024x1366">iPad Pro 12.9" — 1024×1366</option>
+                      <option value="800x1280">Galaxy Tab — 800×1280</option>
+                    </optgroup>
+                  </select>
+      <select id="zoom" aria-label="Zoom">
+        <option value="1" selected>100%</option>
+        <option value="0.85">85%</option>
+        <option value="0.7">70%</option>
+        <option value="0.5">50%</option>
+      </select>
+      <button type="button" id="rotate">Girar</button>
+      <button type="button" id="reload">Recarregar</button>
+      <button type="button" id="raw">Abrir sem moldura</button>
+    </div>
+
+    <div class="phone" id="phone">
+      <div class="screen"><iframe id="frame" title="Preview" src="about:blank"></iframe></div>
+    </div>
+
+    <div class="info" id="info"></div>
+    <div class="warn" id="warn"></div>
+
+    <script src="/device.js"></script>
+  </body>
+</html>
