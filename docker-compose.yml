@@ -12,10 +12,14 @@ services:
       - DB_PATH=/data/data.db
       # Ajuste conforme necessário para o front que acessará
       - ALLOWED_ORIGIN=*
+      # IP da máquina na LAN, usado como sugestão na página de QR Code
+      - LAN_HOST=${LAN_HOST:-}
     ports:
       - "8115:80"
     volumes:
       - inbox_data:/data
+      # Permite subir/parar os containers do ambiente local pela página de QR Code
+      - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:80/api/health"]
       interval: 10s

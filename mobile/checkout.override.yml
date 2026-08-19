@@ -1,0 +1,12 @@
+# Override do new-checkout para acesso pelo celular na rede local.
+# Aplicado a partir do inbox_messages (make mobile-all) — nada muda no repo do checkout.
+services:
+  new-checkout-node:
+    environment:
+      - API_HOST=http://${LAN_IP}:81/api
+      - API_GATEWAY_URL=http://${LAN_IP}:82/api
+      - API_HOST_PRODUCT=http://${LAN_IP}:3000/api
+      - VUE_CHECKOUT_PAGE=http://${LAN_IP}:3000/
+      - INTERNATIONAL_URL=http://${LAN_IP}:3000/
+      - VUE_CHECKOUT_HEAVEN_PAGE=http://${LAN_IP}:3001/
+      - APPLE_PAY_MERCHANT_VALIDATION_URL=http://${LAN_IP}:82/api/apple-pay/merchant-validation

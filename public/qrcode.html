@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .qr-form { max-width: 640px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .qr-form label { display: block; font-weight: 600; font-size: 13px; margin: 14px 0 6px; }
+      .qr-form label:first-of-type { margin-top: 0; }
+      .qr-form input[type="text"], .qr-form select {
+        width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+        font-family: inherit; font-size: 14px; background: #fff;
+      }
+      .qr-form .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
+      .row { display: flex; gap: 10px; }
+      .row > div { flex: 1; }
+      .form-actions { margin-top: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .qr-result { max-width: 640px; margin-top: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; text-align: center; }
+      .qr-result img { image-rendering: pixelated; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .qr-url { margin-top: 12px; font-size: 13px; word-break: break-all; }
+      .qr-status { font-size: 12px; color: #6b7280; margin-top: 8px; }
+      .qr-status.err { color: #b91c1c; }
+      .svc-panel { max-width: 640px; margin-top: 24px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .svc-panel h2 { font-size: 15px; margin: 0 0 4px; }
+      .svc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+      .svc-list { display: flex; flex-direction: column; gap: 8px; }
+      .svc-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .svc-dot { width: 9px; height: 9px; border-radius: 50%; background: #9ca3af; flex: none; }
+      .svc-dot.running { background: #16a34a; }
+      .svc-dot.exited { background: #b91c1c; }
+      .svc-name { font-weight: 600; font-size: 13px; }
+      .svc-meta { color: #6b7280; font-size: 12px; }
+      .svc-grow { flex: 1; min-width: 0; }
+      .svc-item button { padding: 5px 10px; font-size: 12px; }
+      .svc-msg { font-size: 12px; color: #6b7280; margin-top: 10px; }
+      .svc-msg.err { color: #b91c1c; }
+      .svc-summary { font-size: 12px; color: #6b7280; }
+      .cmd-card { max-width: 640px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+      .cmd-card h2 { font-size: 14px; margin: 0 0 4px; color: #1d4ed8; }
+      .cmd-card p { margin: 0 0 12px; font-size: 12.5px; color: #374151; }
+      .cmd-line { display: flex; align-items: center; gap: 10px; background: #0b1020; border-radius: 8px; padding: 10px 12px; }
+      .cmd-line code { flex: 1; color: #cbd5e1; font-family: ui-monospace, 'Fira Mono', Consolas, monospace; font-size: 13px; word-break: break-all; }
+      .cmd-line button { flex: none; padding: 5px 10px; font-size: 12px; }
+      .cmd-note { font-size: 12px; color: #6b7280; margin-top: 10px; }
+      .collapse { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; margin-bottom: 20px; }
+      .collapse > summary { cursor: pointer; padding: 14px 20px; font-weight: 600; font-size: 13px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+      .collapse > summary::-webkit-details-marker { display: none; }
+      .collapse > summary::after { content: '▾'; color: #6b7280; font-size: 12px; }
+      .collapse[open] > summary::after { content: '▴'; }
+      .collapse > summary + * { padding: 0 20px 18px; }
+      .collapse .qr-form { border: none; padding: 0; max-width: none; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link active" href="/qrcode.html">QR Code</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>QR Code</h1>
+          </div>
+
+          <div class="config-info">
+            Gera um QR Code apontando para um serviço local (greenn-adm, greenn-back, etc.) usando o IP da máquina na rede.
+            O celular precisa estar na <strong>mesma rede Wi-Fi</strong> do notebook.
+          </div>
+
+          <div class="cmd-card">
+            <h2>Preparar o ambiente</h2>
+            <p>Rode na raiz do <code>inbox_messages</code> para reconfigurar greenn-adm e new-checkout com o IP da sua máquina:</p>
+            <div class="cmd-line">
+              <code id="cmdText">make mobile-all</code>
+              <button type="button" id="cmdCopy">Copiar</button>
+            </div>
+            <div class="cmd-note">
+              Só é necessário na primeira vez ou quando o IP da rede mudar. Depois disso, use os botões
+              <strong>Subir</strong> / <strong>Parar</strong> abaixo. O greenn-back (81) e o gateway (82) precisam estar de pé.
+            </div>
+          </div>
+
+          <details class="collapse" id="cfgBox">
+            <summary>Configuração da URL</summary>
+            <form id="qrForm" class="qr-form">
+            <label for="target">Serviço</label>
+            <select id="target">
+              <option value="8080" selected>greenn-adm (8080)</option>
+              <option value="81">greenn-back / nginx (81)</option>
+              <option value="3000">new-checkout (3000)</option>
+              <option value="8115">Greenn Tools / inbox (8115)</option>
+              <option value="6002">claim-page (6002)</option>
+              <option value="custom">Personalizado</option>
+            </select>
+
+            <div class="row">
+              <div>
+                <label for="host">IP / Host</label>
+                <input id="host" type="text" placeholder="192.168.0.10" />
+                <div class="hint" id="hostHint">IP da máquina na rede local.</div>
+              </div>
+              <div>
+                <label for="port">Porta</label>
+                <input id="port" type="text" value="8080" />
+              </div>
+            </div>
+
+            <label for="path">Caminho (opcional)</label>
+            <input id="path" type="text" placeholder="/dashboard" />
+
+            <label for="url">URL final</label>
+            <input id="url" type="text" />
+            <div class="hint">Editável — o QR Code usa exatamente este valor.</div>
+
+            <div class="form-actions">
+              <button type="submit">Gerar QR Code</button>
+              <button type="button" id="copyBtn">Copiar URL</button>
+              <button type="button" id="openBtn">Abrir no navegador</button>
+            </div>
+            </form>
+          </details>
+
+          <div class="qr-result" id="result" hidden>
+            <img id="qrImg" alt="QR Code" width="320" height="320" />
+            <div class="qr-url"><a id="qrLink" href="#" target="_blank" rel="noopener"></a></div>
+            <div class="qr-status" id="status"></div>
+          </div>
+
+          <div class="svc-panel">
+            <div class="svc-head">
+              <div>
+                <h2>Ambiente mobile</h2>
+                <div class="svc-summary" id="svcSummary">carregando...</div>
+              </div>
+              <button type="button" id="svcRefresh">Atualizar</button>
+            </div>
+            <div class="form-actions">
+              <button type="button" id="svcUp">Subir</button>
+              <button type="button" id="svcDown" class="danger">Parar</button>
+            </div>
+            <div class="svc-msg" id="svcMsg"></div>
+            <details class="collapse" id="svcBox" style="margin: 14px 0 0;">
+              <summary>Detalhes dos serviços</summary>
+              <div class="svc-list" id="svcList"></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/tab-badge.js"></script>
+    <script src="/qrcode.js"></script>
+  </body>
+</html>

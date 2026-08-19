@@ -1,0 +1,15 @@
+# Override do greenn-adm para acesso pelo celular na rede local.
+# Aplicado a partir do inbox_messages (make mobile-all) — nada muda no repo do adm.
+services:
+  greenn-adm-node:
+    environment:
+      - VUE_APP_API_HOST=http://${LAN_IP}:81
+      - VUE_APP_PUBLIC_API_BASE_URL=http://${LAN_IP}:81/api/v1
+      - VUE_SALES_PAGE=http://${LAN_IP}:3000
+      - VUE_SALES_FAST_PAGE=http://${LAN_IP}:3000
+      - VUE_ADM_PAGE=http://${LAN_IP}:8080
+      - VUE_ADM_XGROW_PAGE=http://${LAN_IP}:8083
+      - VUE_CLAIM_PAGE=http://${LAN_IP}:6002
+      - VUE_CLUB_API_HOST=http://${LAN_IP}:8081
+      - VUE_ENVIOS_API_HOST=http://${LAN_IP}:8080/
+      - VUE_ADM_SALES=http://${LAN_IP}:8081/
