@@ -59,7 +59,7 @@ function formatSaleOption(sale) {
 async function loadRecentSales() {
   if (recentSalesLoaded) return;
   try {
-    const res = await fetch('/api/claims/sales?limit=30');
+    const res = await fetch('/api/sales?limit=30');
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? res.status);
 
@@ -91,7 +91,7 @@ let lookupSeq = 0;
 async function lookupSale(saleId) {
   const seq = ++lookupSeq;
   try {
-    const res = await fetch(`/api/claims/sales/${encodeURIComponent(saleId)}`);
+    const res = await fetch(`/api/sales/${encodeURIComponent(saleId)}`);
     const data = await res.json();
     if (seq !== lookupSeq) return;
     if (!res.ok) {

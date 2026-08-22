@@ -48,7 +48,7 @@
           <a class="sidebar-link active" href="/postback-gateway.html">Postback Gateway</a>
           <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
           <a class="sidebar-link" href="/konduto.html">Konduto</a>
-          <a class="sidebar-link" href="/qrcode.html">QR Code</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
         </div>
       </nav>
       <div class="app-content">
@@ -82,6 +82,17 @@
             <label for="baseUrl">Base da URL</label>
             <input id="baseUrl" name="baseUrl" type="text" value="http://greenn-back-nginx" />
             <div class="hint">O caminho <code>/gateway/webhook</code> é adicionado automaticamente.</div>
+
+            <div id="saleSelectWrap">
+              <label for="saleSelect">Últimas sales</label>
+              <select id="saleSelect">
+                <option value="">Selecione uma sale...</option>
+              </select>
+
+              <label for="saleId">sale_id</label>
+              <input id="saleId" type="text" placeholder="Ou digite o sale_id" />
+              <div id="saleLookupHint" class="hint">Importa o <code>transaction_id</code> da venda escolhida.</div>
+            </div>
 
             <label for="transactionId">Transaction ID</label>
             <input id="transactionId" name="transactionId" type="text" value="caff8353-a1bf-4b39-94a8-9625ddd1fb2f" />
