@@ -27,8 +27,109 @@ envRadios.forEach((radio) => {
     envRadios.forEach((r) => r.closest('.env-option').classList.toggle('active', r === radio));
     baseUrlInput.value = ENV_URLS[radio.value];
     document.body.classList.toggle('env-staging-active', radio.value === 'staging');
+    applyEnvToSaleSelect(radio.value);
   });
 });
+
+// Select das últimas sales: só existe no ambiente local (a lista vem do MySQL do greenn-back).
+// Em staging a tela mantém o comportamento antigo, apenas com os campos digitados na mão.
+const saleSelect = document.getElementById('saleSelect');
+const saleSelectWrap = document.getElementById('saleSelectWrap');
+const saleIdInput = document.getElementById('sale_id');
+const clientIdInput = document.getElementById('client_id');
+const saleLookupHint = document.getElementById('saleLookupHint');
+
+let recentSalesLoaded = false;
+
+function currentEnv() {
+  return document.querySelector('input[name="envTarget"]:checked')?.value ?? 'local';
+}
+
+function setSaleHint(msg, isError = false) {
+  saleLookupHint.textContent = msg;
+  saleLookupHint.style.color = isError ? '#b91c1c' : '#6b7280';
+}
+
+function formatSaleOption(sale) {
+  const amount = sale.amount != null ? `R$ ${Number(sale.amount).toFixed(2)}` : '';
+  const client = sale.clientName ? ` — ${sale.clientName}` : '';
+  return `#${sale.id} — ${sale.status ?? '?'} ${amount}${client}`.trim();
+}
+
+async function loadRecentSales() {
+  if (recentSalesLoaded) return;
+  try {
+    const res = await fetch('/api/claims/sales?limit=30');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? res.status);
+
+    saleSelect.innerHTML = '<option value="">Selecione uma sale...</option>';
+    for (const sale of data.sales ?? []) {
+      const opt = document.createElement('option');
+      opt.value = String(sale.id);
+      opt.textContent = formatSaleOption(sale);
+      opt.dataset.clientId = String(sale.clientId ?? '');
+      saleSelect.appendChild(opt);
+    }
+    recentSalesLoaded = true;
+  } catch (err) {
+    setSaleHint(`Não foi possível carregar as sales: ${err.message}`, true);
+  }
+}
+
+saleSelect.addEventListener('change', () => {
+  const opt = saleSelect.selectedOptions[0];
+  if (!opt?.value) return;
+  saleIdInput.value = opt.value;
+  clientIdInput.value = opt.dataset.clientId ?? '';
+  setSaleHint(`client_id preenchido a partir da sale #${opt.value}.`);
+});
+
+let lookupTimer = null;
+let lookupSeq = 0;
+
+async function lookupSale(saleId) {
+  const seq = ++lookupSeq;
+  try {
+    const res = await fetch(`/api/claims/sales/${encodeURIComponent(saleId)}`);
+    const data = await res.json();
+    if (seq !== lookupSeq) return;
+    if (!res.ok) {
+      setSaleHint(res.status === 404 ? 'Sale não encontrada.' : `Falha na busca: ${data.error ?? res.status}`, true);
+      return;
+    }
+    clientIdInput.value = data.clientId ?? '';
+    setSaleHint(`client_id preenchido a partir da sale #${data.id}.`);
+  } catch (err) {
+    if (seq === lookupSeq) setSaleHint(`Falha na busca: ${err.message}`, true);
+  }
+}
+
+saleIdInput.addEventListener('input', () => {
+  if (currentEnv() !== 'local') return;
+  const value = saleIdInput.value.trim();
+  if (saleSelect.value !== value) saleSelect.value = '';
+  clearTimeout(lookupTimer);
+  if (!/^\d+$/.test(value)) {
+    setSaleHint('');
+    return;
+  }
+  setSaleHint('Buscando client_id...');
+  lookupTimer = setTimeout(() => lookupSale(value), 400);
+});
+
+function applyEnvToSaleSelect(env) {
+  const isLocal = env === 'local';
+  saleSelectWrap.hidden = !isLocal;
+  if (!isLocal) {
+    setSaleHint('');
+    clearTimeout(lookupTimer);
+    return;
+  }
+  loadRecentSales();
+}
+
+applyEnvToSaleSelect(currentEnv());
 
 const randomizeBtn = document.getElementById('randomizeBtn');
 

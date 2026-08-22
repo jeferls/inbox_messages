@@ -19,6 +19,8 @@
       .claim-form .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
       .claim-form .form-row { display: flex; gap: 12px; }
       .claim-form .form-row > div { flex: 1; }
+      .claim-form select { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px; background: #fff; }
+
       .form-actions { margin-top: 18px; display: flex; align-items: center; gap: 10px; }
       .result-box { max-width: 640px; margin-top: 20px; }
       .result-status { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
@@ -83,16 +85,24 @@
         <input id="baseUrl" name="baseUrl" type="text" value="http://greenn-back-nginx" />
         <div class="hint">O caminho <code>/api/claim</code> é adicionado automaticamente.</div>
 
+        <div id="saleSelectWrap">
+          <label for="saleSelect">Últimas sales</label>
+          <select id="saleSelect">
+            <option value="">Selecione uma sale...</option>
+          </select>
+        </div>
+
         <div class="form-row">
           <div>
             <label for="sale_id">sale_id</label>
-            <input id="sale_id" name="sale_id" type="text" value="2324987" />
+            <input id="sale_id" name="sale_id" type="text" value="2324987" placeholder="Ou digite o sale_id" />
           </div>
           <div>
             <label for="client_id">client_id</label>
             <input id="client_id" name="client_id" type="text" value="1500905" />
           </div>
         </div>
+        <div id="saleLookupHint" class="hint"></div>
 
         <label for="category">category</label>
         <input id="category" name="category" type="text" value="Entrega" />
