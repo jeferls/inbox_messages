@@ -44,6 +44,14 @@ export const GREENN_DB = {
 
 // greenn-back visto de dentro da greenn-network (usado para disparar o webhook da Konduto).
 // Do host o mesmo backend responde em http://localhost:81.
+// Banco do sistema de assinaturas (mesmo servidor MySQL, database separado).
+export const GREENN_SUBSCRIPTION_DB_NAME =
+  process.env.GREENN_SUBSCRIPTION_DB_NAME?.trim() || 'greenn-subscription';
+
+// Container do serviço de assinaturas, onde os comandos de recorrência são executados.
+export const SUBSCRIPTION_CONTAINER =
+  process.env.SUBSCRIPTION_CONTAINER?.trim() || 'assinaturas-php';
+
 export const GREENN_BACK_URL =
   (process.env.GREENN_BACK_URL && process.env.GREENN_BACK_URL.trim()) || 'http://greenn-back-nginx';
 

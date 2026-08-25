@@ -9,17 +9,67 @@ const MOBILE_CONTAINERS = [
   { name: 'new-checkout-node', label: 'new-checkout', envKey: 'API_HOST' },
 ];
 
-function request(method, path) {
+function request(method, path, payload = null, timeout = 30000) {
   return new Promise((resolve, reject) => {
-    const req = http.request({ socketPath: SOCKET_PATH, method, path, timeout: 30000 }, (res) => {
-      let body = '';
-      res.on('data', (c) => { body += c; });
-      res.on('end', () => resolve({ status: res.statusCode, body }));
+    const data = payload == null ? null : JSON.stringify(payload);
+    const headers = data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : {};
+    const req = http.request({ socketPath: SOCKET_PATH, method, path, headers, timeout }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        resolve({ status: res.statusCode, body: buffer.toString('utf8'), buffer });
+      });
     });
     req.on('timeout', () => req.destroy(new Error('timeout ao falar com o Docker')));
     req.on('error', reject);
+    if (data) req.write(data);
     req.end();
   });
+}
+
+// O stream do `exec` vem multiplexado: blocos de 8 bytes de cabeçalho (tipo + tamanho)
+// seguidos do conteúdo. Sem TTY é assim que stdout e stderr chegam juntos.
+function demultiplex(buffer) {
+  let stdout = '';
+  let stderr = '';
+  let offset = 0;
+
+  while (offset + 8 <= buffer.length) {
+    const type = buffer[offset];
+    const size = buffer.readUInt32BE(offset + 4);
+    const chunk = buffer.slice(offset + 8, offset + 8 + size).toString('utf8');
+    if (type === 2) stderr += chunk;
+    else stdout += chunk;
+    offset += 8 + size;
+  }
+
+  // Se o daemon devolveu texto puro (container com TTY), usa como está.
+  if (!stdout && !stderr && buffer.length) stdout = buffer.toString('utf8');
+  return { stdout, stderr };
+}
+
+// Executa um comando dentro de um container já em execução e devolve a saída.
+export async function execInContainer(container, cmd, { timeout = 120000 } = {}) {
+  const info = await inspect(container);
+  if (!info) throw new Error(`container ${container} não existe`);
+  if (info.State?.Running !== true) throw new Error(`container ${container} não está rodando`);
+
+  const created = await request('POST', `/containers/${encodeURIComponent(container)}/exec`, {
+    AttachStdout: true,
+    AttachStderr: true,
+    Cmd: cmd,
+  });
+  if (created.status !== 201) throw new Error(`Docker respondeu ${created.status}: ${created.body}`);
+
+  const execId = JSON.parse(created.body).Id;
+  const started = await request('POST', `/exec/${execId}/start`, { Detach: false, Tty: false }, timeout);
+  if (started.status !== 200) throw new Error(`Docker respondeu ${started.status}: ${started.body}`);
+
+  const inspectExec = await request('GET', `/exec/${execId}/json`);
+  const exitCode = inspectExec.status === 200 ? JSON.parse(inspectExec.body).ExitCode : null;
+
+  return { exitCode, ...demultiplex(started.buffer) };
 }
 
 export function isDockerAvailable() {

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .subs-card { margin-top: 20px; }
+      .subs-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+      .subs-head h2 { margin: 0; flex: 1; min-width: 160px; font-size: 16px; }
+      .subs-head input[type="search"] { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13.5px; font-family: inherit; min-width: 260px; }
+
+      .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #e5e7eb; margin-bottom: 12px; }
+      .tab { display: inline-flex; align-items: center; gap: 7px; border: none; background: none; padding: 9px 14px; border-bottom: 2px solid transparent; border-radius: 0; font-size: 13.5px; font-weight: 600; color: #6b7280; cursor: pointer; margin-bottom: -1px; }
+      .tab:hover { background: #f3f4f6; color: #374151; }
+      .tab.active { color: #1d4ed8; border-bottom-color: #2563eb; }
+      .tab-count { background: #f3f4f6; color: #4b5563; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; font-weight: 600; }
+      .tab.active .tab-count { background: #dbeafe; color: #1d4ed8; }
+
+      .table-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+      .subs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .subs-table th, .subs-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+      .subs-table thead th { position: sticky; top: 0; background: #f9fafb; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+      .subs-table tbody tr:hover { background: #f9fafb; }
+      .subs-table tbody tr:last-child td { border-bottom: none; }
+      .subs-table .mono { font-family: ui-monospace, 'Fira Mono', Consolas, monospace; font-size: 12px; }
+      .subs-table .sub { color: #6b7280; font-size: 12px; }
+      .empty-row td { text-align: center; color: #6b7280; padding: 24px; white-space: normal; }
+      .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+      .row-actions button { padding: 4px 10px; font-size: 12.5px; }
+      tr.charges-row td { background: #0b1020; color: #cbd5e1; white-space: normal; padding: 0; }
+      .charges-inner { padding: 10px 12px; }
+      .charges-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+      .charges-table th, .charges-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #1f2937; white-space: nowrap; }
+      .charges-table tbody tr:last-child td { border-bottom: none; }
+      .charges-table thead th { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+      .btn-recurrence { border-color: #2563eb; color: #1d4ed8; }
+      .btn-recurrence:hover:not(:disabled) { background: #eff6ff; }
+      .row-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .charges-inner .mono { font-family: ui-monospace, 'Fira Mono', Consolas, monospace; }
+
+      .badge { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 600; border: 1px solid transparent; }
+      .badge.st-ok { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+      .badge.st-warn { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+      .badge.st-err { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+      .badge.st-neutral { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+
+      .table-foot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280; }
+      .table-foot .spacer { flex: 1; }
+      .list-error { color: #b91c1c; font-size: 13px; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link active" href="/recorrencia.html">Recorrência</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Recorrência</h1>
+          </div>
+
+          <div class="config-info">
+            Assinaturas do sistema de recorrência (<code>greenn-subscription</code>), lidas direto do banco local.
+            Use a busca para filtrar por id da assinatura, cliente ou plano.
+          </div>
+
+          <section class="card subs-card">
+            <div class="subs-head">
+              <h2>Assinaturas (<code>subscriptions</code>)</h2>
+              <input id="searchInput" type="search" placeholder="Buscar por id, cliente, email ou plano" />
+              <button id="reloadBtn" type="button">Atualizar</button>
+            </div>
+
+            <div id="statusTabs" class="tabs" role="tablist"></div>
+
+            <div class="table-wrap">
+              <table class="subs-table">
+                <thead>
+                  <tr>
+                    <th>Assinatura</th>
+                    <th>Status</th>
+                    <th>Pagamento</th>
+                    <th>Período atual</th>
+                    <th>Cobranças</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="subsBody">
+                  <tr class="empty-row"><td colspan="6">Carregando...</td></tr>
+                </tbody>
+              </table>
+              <div class="table-foot">
+                <span id="totalLabel">0 assinaturas</span>
+                <div class="spacer"></div>
+                <button id="prevBtn" type="button">Anterior</button>
+                <span id="pageInfo">1/1</span>
+                <button id="nextBtn" type="button">Próxima</button>
+              </div>
+            </div>
+
+            <div id="listError" class="list-error" hidden></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script src="/recorrencia.js"></script>
+    <script src="/tab-badge.js?v=1"></script>
+  </body>
+</html>
