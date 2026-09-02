@@ -1,0 +1,223 @@
+{
+  "pagamento_confirmado": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "header": {
+      "type": "text",
+      "text": "Pagamento confirmado"
+    },
+    "body": "Olá {{1}}, recebemos seu pagamento de *{{2}}* referente ao pedido {{3}}.\n\nO acesso ao produto já está liberado.",
+    "footer": "Não responda esta mensagem",
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Ver pedido",
+        "url": "https://exemplo.com/pedido/{{1}}"
+      },
+      {
+        "type": "QUICK_REPLY",
+        "text": "Falar com suporte"
+      }
+    ]
+  },
+  "boleto_disponivel": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "header": {
+      "type": "document"
+    },
+    "body": "{{nome}}, seu boleto de {{valor}} vence em {{vencimento}}. Copie o código abaixo para pagar pelo app do banco.",
+    "footer": "Equipe financeira",
+    "buttons": [
+      {
+        "type": "COPY_CODE",
+        "text": "Copiar código"
+      },
+      {
+        "type": "PHONE_NUMBER",
+        "text": "Ligar",
+        "phone_number": "+5511999990000"
+      }
+    ]
+  },
+  "welcome_club_complete": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá {{1}}! Seu acesso ao *{{2}}* está liberado.\n\nEntre com o e-mail {{3}} para começar.",
+    "footer": "Greenn Club",
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Acessar",
+        "url": "https://exemplo.com/r/{{1}}"
+      }
+    ]
+  },
+  "welcome_site": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá {{1}}! Sua compra de *{{2}}* foi confirmada. Acesse pelo botão abaixo.",
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Acessar",
+        "url": "https://exemplo.com/r/{{1}}"
+      }
+    ]
+  },
+  "new_course": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá {{1}}! O curso *{{2}}* está disponível para você.",
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Ver curso",
+        "url": "https://exemplo.com/r/{{1}}"
+      }
+    ]
+  },
+  "2fa_greenn": {
+    "language": "pt_BR",
+    "category": "AUTHENTICATION",
+    "body": "Seu código de verificação Greenn é *{{1}}*.\n\nNão compartilhe este código.",
+    "buttons": [
+      {
+        "type": "COPY_CODE",
+        "text": "Copiar código"
+      }
+    ]
+  },
+  "sale_express_step_1": {
+    "language": "pt_BR",
+    "category": "MARKETING",
+    "header": {
+      "type": "image"
+    },
+    "body": "Olá *{{1}}*! Vi que comprou o produto *{{2}}* de *{{3}}*, e pensando nisso fizemos uma oferta especial para você: *{{4}}* ({{5}}) por *{{6}}*! Gostaria de adquirir?",
+    "footer": "Text2Sell · Greenn",
+    "buttons": [
+      {
+        "type": "QUICK_REPLY",
+        "text": "SIM, quero garantir!"
+      },
+      {
+        "type": "QUICK_REPLY",
+        "text": "NÃO, alterar pagamento."
+      }
+    ]
+  },
+  "sale_express_credit_card_step_1": {
+    "language": "pt_BR",
+    "category": "MARKETING",
+    "header": {
+      "type": "image"
+    },
+    "body": "Olá *{{1}}*! Vi que comprou o produto *{{2}}* de *{{3}}*, e pensando nisso fizemos uma oferta especial pra você: *{{4}}* ({{5}}) por *{{6}}*! Gostaria de comprá-lo usando o cartão da venda anterior com final *{{7}}* em *{{8}}x* de *{{9}}*?",
+    "footer": "Text2Sell · Greenn",
+    "buttons": [
+      {
+        "type": "QUICK_REPLY",
+        "text": "SIM, quero garantir!"
+      },
+      {
+        "type": "QUICK_REPLY",
+        "text": "NÃO, alterar pagamento."
+      }
+    ]
+  },
+  "turbo_bump_simple": {
+    "language": "pt_BR",
+    "category": "MARKETING",
+    "body": "Olá *{{1}}*! Vi que comprou o produto *{{2}}* de *{{3}}*, e temos uma oferta especial para você: *{{4}}*.\n\n{{5}}\n\nGostaria de garantir?",
+    "footer": "Turbo Bump · Greenn",
+    "buttons": [
+      {
+        "type": "QUICK_REPLY",
+        "text": "SIM, quero garantir!"
+      },
+      {
+        "type": "QUICK_REPLY",
+        "text": "NÃO, prefiro perder."
+      }
+    ]
+  },
+  "turbo_bump_multiple": {
+    "language": "pt_BR",
+    "category": "MARKETING",
+    "body": "Olá *{{1}}*! Vi que comprou o produto *{{2}}* de *{{3}}*, e temos ofertas especiais para você:\n\n{{4}}\n{{5}}\n{{6}}\n\nGostaria de garantir alguma?",
+    "footer": "Turbo Bump · Greenn",
+    "buttons": [
+      {
+        "type": "QUICK_REPLY",
+        "text": "SIM, quero garantir!"
+      },
+      {
+        "type": "QUICK_REPLY",
+        "text": "NÃO, prefiro perder."
+      }
+    ]
+  },
+  "sale_paid_message": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá *{{client_name}}*! Sua compra de *{{product_name}}* foi confirmada. 🎉\n\nEm instantes você recebe as instruções de acesso.",
+    "footer": "Greenn"
+  },
+  "product_type_event": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Seu ingresso está garantido! Enviamos para o seu e-mail o QR Code de entrada e todas as informações do evento."
+  },
+  "product_type_physical": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Seu pedido está confirmado! O vendedor vai preparar o envio e você receberá o código de rastreio por e-mail."
+  },
+  "product_type_archive": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Seus arquivos já estão disponíveis! Acesse o link enviado ao seu e-mail para fazer o download."
+  },
+  "product_type_mentoring": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Sua mentoria está confirmada! Acesse pelo link abaixo para agendar e acompanhar:\n{{1}}"
+  },
+  "sale_message_helper": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Precisa de ajuda com a sua compra? Responda esta mensagem ou fale com o nosso suporte pelo e-mail suporte@greenn.com.br."
+  },
+  "refund_claim_opening_message": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá *{{1}}*, recebemos sua reclamação sobre a compra de *{{2}}* do produto *{{3}}*.\n\nO vendedor tem até *{{4}}* para responder. Se preferir, fale diretamente com *{{5}}* pelo e-mail {{6}}.",
+    "footer": "Greenn"
+  },
+  "refund_solicitation_opening": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá *{{1}}*, recebemos sua solicitação de reembolso de *{{2}}* referente ao produto *{{3}}*. Vamos analisar e te avisamos por aqui.",
+    "footer": "Greenn"
+  },
+  "refund_solicitation_success": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá *{{1}}*, seu reembolso de *{{2}}* do produto *{{3}}* foi aprovado. ✅\n\n{{4}}",
+    "footer": "Greenn"
+  },
+  "access_files_greenn": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "body": "Olá *{{client_name}}*! Os arquivos do produto *{{product_name}}* já estão disponíveis. Toque no botão para baixar.",
+    "footer": "Greenn",
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Baixar arquivos",
+        "url": "http://localhost:81/api/attachments/download/{{1}}"
+      }
+    ]
+  }
+}

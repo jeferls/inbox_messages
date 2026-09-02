@@ -59,3 +59,32 @@ export const GREENN_BACK_URL =
 export const LOG_DIR = (process.env.LOG_DIR && process.env.LOG_DIR.trim()) || path.join(__dirname, '..', '..', 'logs');
 export const LOG_FILE = (process.env.LOG_FILE && process.env.LOG_FILE.trim()) || path.join(LOG_DIR, 'app.log');
 export const LOG_MAX_TAIL_BYTES = Number(process.env.LOG_MAX_TAIL_BYTES || 1024 * 1024 * 2); // 2MB
+
+// Mock da WhatsApp Cloud API (aba WhatsApp). O que a UI salva vale como padrão;
+// variáveis de ambiente, quando definidas, sobrescrevem.
+export const WA_MOCK = {
+  env: {
+    webhookUrl: process.env.WA_MOCK_WEBHOOK_URL?.trim(),
+    phoneNumberId: process.env.WA_MOCK_PHONE_NUMBER_ID?.trim(),
+    displayPhone: process.env.WA_MOCK_DISPLAY_PHONE?.trim(),
+    businessName: process.env.WA_MOCK_BUSINESS_NAME?.trim(),
+    contactName: process.env.WA_MOCK_CONTACT_NAME?.trim(),
+    defaultWaId: process.env.WA_MOCK_CONTACT_WA_ID?.trim(),
+  },
+  defaults: {
+    webhookUrl: '',
+    phoneNumberId: '123456789012345',
+    displayPhone: '5511999990000',
+    businessName: 'Greenn',
+    contactName: 'Cliente Teste',
+    defaultWaId: '5511988887777',
+  },
+  // Se definido, assina o webhook com X-Hub-Signature-256
+  appSecret: process.env.WA_MOCK_APP_SECRET?.trim() || '',
+  deliveredDelayMs: Number(process.env.WA_MOCK_DELIVERED_DELAY_MS || 600),
+  // O callback do messages publica no RabbitMQ de forma síncrona e pode passar de 5s
+  webhookTimeoutMs: Number(process.env.WA_MOCK_WEBHOOK_TIMEOUT_MS || 20000),
+};
+// Conversas ficam ao lado do SQLite (no Docker, dentro do volume /data)
+export const WA_MOCK_STATE_FILE = path.join(path.dirname(DB_PATH), 'wa-mock-state.json');
+export const WA_MOCK_TEMPLATES_FILE = path.join(__dirname, '..', 'mocks', 'whatsapp', 'templates.json');

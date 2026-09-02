@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfe9dd"/><stop offset="1" stop-color="#8fc7ad"/></linearGradient></defs>
+  <rect width="600" height="400" fill="url(#g)"/>
+  <rect x="150" y="120" width="300" height="160" rx="12" fill="#fff" opacity=".9"/>
+  <text x="300" y="195" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#54656f">imagem de exemplo</text>
+  <text x="300" y="230" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#8696a0">600 × 400</text>
+</svg>

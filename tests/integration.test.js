@@ -424,3 +424,14 @@ test.after(async () => {
   await new Promise((resolve) => server.close(resolve));
 });
 
+
+test('POST /api/send/:inboxId aceita o formato da API do Mailtrap', async () => {
+  const res = await fetch(`${baseURL}/api/send/3897690`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: { email: 'no-reply@greenn.com.br', name: 'Greenn' }, to: [{ email: 'cliente@exemplo.com' }], subject: 'Pedido aprovado', text: 'Olá!' }),
+  });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.success, true);
+  assert.equal(body.message_ids.length, 1);
+});

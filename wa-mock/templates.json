@@ -1,0 +1,24 @@
+{
+  "pagamento_confirmado": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "header": { "type": "text", "text": "Pagamento confirmado" },
+    "body": "Olá {{1}}, recebemos seu pagamento de *{{2}}* referente ao pedido {{3}}.\n\nO acesso ao produto já está liberado.",
+    "footer": "Não responda esta mensagem",
+    "buttons": [
+      { "type": "URL", "text": "Ver pedido", "url": "https://exemplo.com/pedido/{{1}}" },
+      { "type": "QUICK_REPLY", "text": "Falar com suporte" }
+    ]
+  },
+  "boleto_disponivel": {
+    "language": "pt_BR",
+    "category": "UTILITY",
+    "header": { "type": "document" },
+    "body": "{{nome}}, seu boleto de {{valor}} vence em {{vencimento}}. Copie o código abaixo para pagar pelo app do banco.",
+    "footer": "Equipe financeira",
+    "buttons": [
+      { "type": "COPY_CODE", "text": "Copiar código" },
+      { "type": "PHONE_NUMBER", "text": "Ligar", "phone_number": "+5511999990000" }
+    ]
+  }
+}

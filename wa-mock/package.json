@@ -1,0 +1,11 @@
+{
+  "name": "wa-mock",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mock local da WhatsApp Cloud API com preview visual das mensagens",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": { "node": ">=18" }
+}

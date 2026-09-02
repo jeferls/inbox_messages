@@ -14,6 +14,8 @@ services:
       - ALLOWED_ORIGIN=*
       # IP da máquina na LAN, usado como sugestão na página de QR Code
       - LAN_HOST=${LAN_HOST:-}
+      # Mock da WhatsApp Cloud API (aba WhatsApp): backend que recebe os webhooks (mensagens do cliente e status)
+      - WA_MOCK_WEBHOOK_URL=${WA_MOCK_WEBHOOK_URL:-http://messages-nginx/api/whatsapp/callback}
     ports:
       - "8115:80"
     volumes:

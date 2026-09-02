@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createEmail, listEmailsHandler, getEmailHandler, clearEmailsHandler } from '../controllers/emails.controller.js';
+import { createEmail, createMailtrapEmail, listEmailsHandler, getEmailHandler, clearEmailsHandler } from '../controllers/emails.controller.js';
 import { insertEmail, appendEmailBody, updateEmailBody, getEmailById, deleteEmailById } from '../db/index.js';
 import { logLine } from '../utils/logger.js';
 import { rewriteClaimUrls } from '../utils/urlRewrite.js';
@@ -8,6 +8,8 @@ const router = Router();
 
 router.post('/emails', createEmail);
 router.post('/send', createEmail);
+// messages local (MAILTRAP_API_URL) envia no formato da API do Mailtrap
+router.post('/send/:inboxId', createMailtrapEmail);
 // Streaming de corpo grande: POST /api/emails/stream?title=...&recipient=...
 router.post('/emails/stream', async (req, res) => {
   const title = (req.query.title || '').toString().trim();

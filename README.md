@@ -285,3 +285,24 @@ Testes
 - Comandos:
   - `npm test`
 - O teste de integração sobe a aplicação em porta efêmera e usa um banco SQLite temporário.
+
+Mock da WhatsApp Cloud API (aba WhatsApp)
+- Página: `http://localhost:8115/whatsapp.html`. Preview visual das mensagens no estilo do app, com botões e listas clicáveis.
+- No backend, troque a base `https://graph.facebook.com/v20.0` por `http://localhost:8115/v20.0` (de dentro da `greenn-network`: `http://svc-inbox_messages/v20.0`). Qualquer token é aceito; payload e resposta seguem o formato da Cloud API, erros também (`{ error: { message: "(#100) ...", code: 100 } }`).
+  ```sh
+  curl -X POST http://localhost:8115/v20.0/123456789012345/messages \
+    -H 'Content-Type: application/json' -H 'Authorization: Bearer qualquer' \
+    -d '{"messaging_product":"whatsapp","to":"5511988887777","type":"text","text":{"body":"Olá *Maria*, pedido _#4821_ aprovado."}}'
+  ```
+- O que o **Cliente** faz na UI (texto, clique em botão, item de lista) vira webhook no formato Meta para `WA_MOCK_WEBHOOK_URL` (configurável também pela engrenagem da página), incluindo `statuses` (`sent` → `delivered` → `read`).
+- Templates: só os parâmetros vão no envio; o texto vem de `src/mocks/whatsapp/templates.json` (relido a cada envio). Template ausente aparece como card vermelho com o payload.
+- Endpoints internos: `GET /api/wa-mock/state`, `GET /api/wa-mock/events` (SSE), `GET /api/wa-mock/templates`, `POST /api/wa-mock/inbound`, `POST /api/wa-mock/config`, `POST /api/wa-mock/clear`.
+- Variáveis (opcionais; sobrescrevem o que a UI salvou): `WA_MOCK_WEBHOOK_URL`, `WA_MOCK_APP_SECRET` (assina com `X-Hub-Signature-256`), `WA_MOCK_PHONE_NUMBER_ID`, `WA_MOCK_DISPLAY_PHONE`, `WA_MOCK_BUSINESS_NAME`, `WA_MOCK_CONTACT_NAME`, `WA_MOCK_CONTACT_WA_ID`, `WA_MOCK_DELIVERED_DELAY_MS`, `WA_MOCK_WEBHOOK_TIMEOUT_MS` (padrão 20s).
+- Estado (conversas e config) fica em `wa-mock-state.json` ao lado do SQLite (`/data` no Docker). Limitações: uma conversa por número, sem upload de mídia, sem grupos.
+
+Integração com o messages (greenn-local)
+- greenn-back → messages (`http://messages-nginx/api/send` e `api/whatsapp/send`) → mocks desta ferramenta. Configuração feita em `greenn-local` (template `templates/messages.env.dev.template` e `dev-overlay/messages`):
+  - `URL_WHATSAPP_META=http://svc-inbox_messages/v20.0/<phone_number_id>/messages` → aba WhatsApp.
+  - `MAILTRAP_API_URL=http://svc-inbox_messages` → e-mails caem no Inbox via `POST /api/send/:inboxId` (formato da API do Mailtrap: `from`, `to[]`, `subject`, `text|html`).
+  - Container `messages-worker` roda os workers das filas `_send_message_email`, `_send_message_whatsapp` e `_postback_whatsapp`.
+- Volta: o mock envia o webhook para `WA_MOCK_WEBHOOK_URL` (padrão `http://messages-nginx/api/whatsapp/callback`), e o messages repassa aos postbacks do greenn-back.

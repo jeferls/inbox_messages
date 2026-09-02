@@ -69,3 +69,21 @@ export async function clearEmailsHandler(req, res) {
   }
 }
 
+
+// Formato da API de envio do Mailtrap (POST /api/send/:inboxId), usado pelo messages em ambiente
+// local (Helpers/Email.php → sendByMailTrap). Resposta imita a do Mailtrap: { success, message_ids }.
+export async function createMailtrapEmail(req, res) {
+  try {
+    const { from, to, subject, text, html } = req.body || {};
+    const recipient = (Array.isArray(to) ? to[0]?.email : to?.email ?? '').toString().trim();
+    const finalTitle = (subject ?? '').toString().trim();
+    const finalBody = (html ?? text ?? '').toString();
+    if (!finalTitle || !recipient || !finalBody) {
+      return res.status(400).json({ success: false, errors: ['Campos obrigatórios: subject, to[0].email, text ou html'] });
+    }
+    const created = await insertEmail({ title: finalTitle, recipient, body: rewriteClaimUrls(finalBody) });
+    return res.status(200).json({ success: true, message_ids: [String(created.id)] });
+  } catch (err) {
+    return res.status(500).json({ success: false, errors: [String(err)] });
+  }
+}

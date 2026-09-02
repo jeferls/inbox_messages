@@ -24,6 +24,7 @@ import kondutoRoutes from './routes/konduto.routes.js';
 import qrcodeRoutes from './routes/qrcode.routes.js';
 import dockerRoutes from './routes/docker.routes.js';
 import embedCheckRoutes from './routes/embed-check.routes.js';
+import waMockRoutes from './routes/wa-mock.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -104,6 +105,7 @@ app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);
 app.use('/', receivableDirectRoutes);
 app.use('/', holidayRoutes);
+app.use('/', waMockRoutes);
 
 // Tratativa explícita para payload grande: retorna JSON amigável
 app.use((err, req, res, next) => {

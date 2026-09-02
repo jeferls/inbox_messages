@@ -45,3 +45,6 @@ data.db
 *.pid
 *.pid.lock
 *.seed
+
+# Estado do mock do WhatsApp (aba WhatsApp)
+wa-mock-state.json
