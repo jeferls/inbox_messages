@@ -25,6 +25,7 @@ import qrcodeRoutes from './routes/qrcode.routes.js';
 import dockerRoutes from './routes/docker.routes.js';
 import embedCheckRoutes from './routes/embed-check.routes.js';
 import waMockRoutes from './routes/wa-mock.routes.js';
+import emailTemplatesRoutes from './routes/email-templates.routes.js';
 import whsForwardRoutes from './routes/whs-forward.routes.js';
 import { autoStart as whsAutoStart } from './services/whs-forward.service.js';
 
@@ -103,6 +104,7 @@ app.use('/api', kondutoRoutes);
 app.use('/api', qrcodeRoutes);
 app.use('/api', dockerRoutes);
 app.use('/api', embedCheckRoutes);
+app.use('/api', emailTemplatesRoutes);
 app.use('/api', whsForwardRoutes);
 app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);

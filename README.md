@@ -313,3 +313,10 @@ Webhook Forward (webhook.site → local)
 - O que já foi reenviado fica registrado em `whs-forward.json` (ao lado do SQLite) para não duplicar entre reinícios. Encaminhadores marcados com "Subir junto com o servidor" voltam a rodar sozinhos.
 - API: `GET/POST /api/whs-forward/forwarders`, `PUT/DELETE /api/whs-forward/forwarders/:id`, `POST .../:id/start` (`{ backfill: true }` para histórico), `POST .../:id/stop`, `POST .../:id/reset`, `GET .../:id/log`, `POST /api/whs-forward/check`.
 - Variáveis: `WHS_BASE_URL` (padrão `https://webhook.site`). Sem Api-Key o webhook.site limita a frequência de consulta; abaixo de 3s pode responder 429.
+
+E-mails do greenn-back (templates com dados fictícios)
+- Página: `http://localhost:8115/email-templates.html`. Lista todos os templates de `resources/views/emails/` do greenn-back (exceto `layouts/`), agrupados por pasta. "Enviar todos" ou "Enviar selecionados" renderiza cada template dentro do container `greenn-back-php` com um conjunto fixo de dados fictícios e grava o HTML no Inbox, com o nome da view como título. Não passa pelo fluxo de envio do backend e não precisa de vendas reais.
+- Templates com layout condicional aparecem mais de uma vez, com a variante entre colchetes (ex.: `emails.orders.success.paid.client [boleto]`). Destinatário é escolhido pelo público do template (cliente, vendedor ou afiliado); o campo opcional força um só destinatário.
+- Requer o socket do Docker montado (já está no `docker-compose.yml`) e o container do greenn-back de pé.
+- API: `GET /api/email-templates` (lista) e `POST /api/email-templates/send` com `{ labels?: string[], recipient?: string }` (`labels` vazio envia todos). Resposta: `{ sent, failed, results: [{ label, ok, id | error, recipient }] }`.
+- Variáveis: `GREENN_BACK_CONTAINER` (padrão `greenn-back-php`). Os dados fictícios ficam em `src/services/email-templates.service.js`.

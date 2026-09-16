@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .config-info { font-size: 13.5px; line-height: 1.55; color: #374151; margin-bottom: 14px; }
+      .config-info code { background: #f3f4f6; border-radius: 4px; padding: 2px 6px; font-size: 12.5px; }
+
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+      .toolbar .spacer { flex: 1; }
+      .toolbar input[type="text"] { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 240px; }
+      button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
+      button.primary:hover { background: #15803d; }
+      button:disabled { opacity: 0.55; cursor: progress; }
+
+      .groups { padding: 6px 12px 12px; }
+      .group { margin-top: 10px; }
+      .group-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; color: #374151; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+      .group-head .count { color: #6b7280; font-weight: 400; font-size: 12.5px; }
+      .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2px 16px; padding: 4px 0 0 4px; }
+      .items label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #111827; padding: 3px 0; cursor: pointer; }
+      .items label code { font-size: 12.5px; }
+      .variant { color: #6b7280; }
+
+      .results { margin-top: 16px; }
+      .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .results-table th, .results-table td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #e5e7eb; }
+      .results-table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; }
+      .results-table tr:last-child td { border-bottom: none; }
+      .pill { display: inline-flex; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+      .pill.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+      .pill.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+      .error-text { color: #b91c1c; font-size: 12.5px; word-break: break-word; }
+      .list-error { color: #b91c1c; font-size: 13px; padding: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link active" href="/email-templates.html">E-mails</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link" href="/recorrencia.html">Recorrência</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
+          <a class="sidebar-link" href="/whatsapp.html">WhatsApp</a>
+          <a class="sidebar-link" href="/whs-forward.html">Webhook Forward</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>E-mails do greenn-back</h1>
+          </div>
+
+          <div class="config-info">
+            Renderiza os templates de <code>resources/views/emails/</code> dentro do container
+            <code>greenn-back-php</code> com dados fictícios e grava cada um no Inbox, sem passar pelo
+            fluxo de envio nem precisar de vendas reais. Templates com layout condicional aparecem
+            mais de uma vez, com a variante entre colchetes.
+          </div>
+
+          <section class="panel">
+            <div class="toolbar">
+              <button id="selectAllBtn" type="button">Selecionar todos</button>
+              <button id="selectNoneBtn" type="button">Limpar seleção</button>
+              <span id="selectedLabel" class="status-line">0 selecionados</span>
+              <div class="spacer"></div>
+              <input id="recipientInput" type="text" placeholder="Destinatário (opcional)" />
+              <button id="sendSelectedBtn" type="button" class="primary" disabled>Enviar selecionados</button>
+              <button id="sendAllBtn" type="button" class="primary">Enviar todos</button>
+              <button id="reloadBtn" type="button">Atualizar</button>
+            </div>
+            <div id="groups" class="groups"><div class="empty">Carregando templates...</div></div>
+            <div id="listError" class="list-error" hidden></div>
+          </section>
+
+          <section id="resultsPanel" class="panel results" hidden>
+            <div class="panel-header">
+              <strong id="resultsTitle">Resultado</strong>
+              <a class="button-link" href="/">Abrir Inbox</a>
+            </div>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Template</th>
+                  <th>Status</th>
+                  <th>Destinatário</th>
+                  <th>Detalhe</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script src="/email-templates.js"></script>
+    <script src="/tab-badge.js?v=1"></script>
+  </body>
+</html>

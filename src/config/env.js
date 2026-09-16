@@ -52,6 +52,9 @@ export const GREENN_SUBSCRIPTION_DB_NAME =
 export const SUBSCRIPTION_CONTAINER =
   process.env.SUBSCRIPTION_CONTAINER?.trim() || 'assinaturas-php';
 
+// Container where the email templates are rendered (aba E-mails).
+export const GREENN_BACK_CONTAINER = process.env.GREENN_BACK_CONTAINER?.trim() || 'greenn-back-php';
+
 export const GREENN_BACK_URL =
   (process.env.GREENN_BACK_URL && process.env.GREENN_BACK_URL.trim()) || 'http://greenn-back-nginx';
 
