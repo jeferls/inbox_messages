@@ -95,3 +95,16 @@ export const WA_MOCK_TEMPLATES_FILE = path.join(__dirname, '..', 'mocks', 'whats
 // Encaminhador do webhook.site (aba Webhook Forward)
 export const WHS_BASE_URL = (process.env.WHS_BASE_URL && process.env.WHS_BASE_URL.trim().replace(/\/$/, '')) || 'https://webhook.site';
 export const WHS_FORWARD_STATE_FILE = path.join(path.dirname(DB_PATH), 'whs-forward.json');
+
+// Notificação de conciliação de liquidação da TAG (aba TAG URs). Os CSVs de exemplo
+// ficam num bucket GCS público que simula o bucket da TAG.
+export const TAG_CONCILIATION = {
+  bucketUrl:
+    (process.env.TAG_CONCILIATION_BUCKET_URL && process.env.TAG_CONCILIATION_BUCKET_URL.trim().replace(/\/$/, '')) ||
+    'https://storage.googleapis.com/greenn-tag-conciliacao-mock',
+  files: (process.env.TAG_CONCILIATION_FILES?.trim() || 'conciliacao_2026-09-08.csv,conciliacao_2026-09-09.csv,conciliacao_2026-09-10.csv')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+  defaultDocumentNumber: process.env.TAG_CONCILIATION_DOCUMENT_NUMBER?.trim() || '12345678000199',
+};

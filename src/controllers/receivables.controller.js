@@ -10,6 +10,8 @@ import {
   updateReceivableProcessResponseByKey,
   updateReceivableProcessByKey,
 } from '../db/index.js';
+import { TAG_CONCILIATION } from '../config/env.js';
+import { listConciliationFiles, sendTagConciliationWebhook } from '../services/tag-conciliation-webhook.service.js';
 
 function comboKey({ originalAssetHolder, dueDate, paymentScheme }) {
   return `${String(originalAssetHolder ?? '')}::${String(dueDate ?? '')}::${String(paymentScheme ?? '')}`;
@@ -490,5 +492,31 @@ export async function patchReceivableSettlementHandler(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro ao registrar settlement' });
+  }
+}
+
+/** Lista os CSVs de conciliação disponíveis no bucket mock. */
+export function listConciliationFilesHandler(_req, res) {
+  res.json({ files: listConciliationFiles(), defaultDocumentNumber: TAG_CONCILIATION.defaultDocumentNumber });
+}
+
+/** Dispara a notificação de conciliação de liquidação da TAG contra o greenn-back. */
+export async function sendConciliationWebhookHandler(req, res) {
+  const { documentNumber, urls, backUrl } = req.body || {};
+
+  if (!documentNumber || typeof documentNumber !== 'string') {
+    return res.status(400).json({ error: "'documentNumber' é obrigatório" });
+  }
+
+  if (!Array.isArray(urls) || !urls.length || urls.some((u) => typeof u !== 'string' || !u)) {
+    return res.status(400).json({ error: "'urls' precisa ser uma lista com ao menos uma URL" });
+  }
+
+  try {
+    // O resultado do backend vai como 200 mesmo quando ele recusa:
+    // a tela mostra o corpo da resposta para o usuário entender o motivo.
+    res.json(await sendTagConciliationWebhook({ documentNumber, urls, backUrl }));
+  } catch (error) {
+    res.status(502).json({ error: `Falha ao disparar a notificação: ${error.message}` });
   }
 }

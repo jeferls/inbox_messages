@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Greenn-Tools</title>
     <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .conciliation-panel { margin-top: 16px; }
+      .conciliation-body { padding: 12px; }
+      .conciliation-form { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 8px; }
+      .conciliation-form input[type="text"], .conciliation-form select { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; }
+      .webhook-result { margin-top: 12px; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+      .webhook-result.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+      .webhook-result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+      .webhook-result pre { margin: 8px 0 0; background: #0b1020; color: #cbd5e1; border-radius: 6px; padding: 10px; overflow: auto; max-height: 30vh; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    </style>
   </head>
   <body>
     <div class="app-shell">
@@ -60,11 +70,36 @@
               </div>
             </section>
           </div>
+
+          <section class="panel conciliation-panel">
+            <div class="panel-header">
+              <strong>Conciliação de liquidação (Res. BCB 514)</strong>
+            </div>
+            <div class="conciliation-body">
+              <p class="status-line">
+                Dispara <code>POST /webhook/tag-notification</code> no greenn-back com o payload que a TAG envia
+                ao detectar não conformidades. A <code>conciliationKey</code> é gerada a cada disparo.
+              </p>
+              <div class="conciliation-form">
+                <label class="inline">documentNumber
+                  <input id="conciliationDocumentNumber" type="text" placeholder="CNPJ da credenciadora" />
+                </label>
+                <label class="inline">CSV
+                  <select id="conciliationFile"></select>
+                </label>
+                <label class="inline">
+                  <input id="conciliationAllFiles" type="checkbox" /> enviar todos os CSVs em <code>urls</code>
+                </label>
+                <button id="sendConciliationBtn" type="button">Disparar notificação</button>
+              </div>
+              <div id="conciliationResult" class="webhook-result" hidden></div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
 
-    <script src="/receivables.js?v=3"></script>
+    <script src="/receivables.js?v=4"></script>
     <script src="/tab-badge.js?v=1"></script>
   </body>
 </html>

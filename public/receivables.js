@@ -255,3 +255,93 @@ function debounce(fn, wait) {
     timer = setTimeout(() => fn(...args), wait);
   };
 }
+
+// --- Conciliação de liquidação (notificação da TAG) ---
+const conciliationDocEl = document.getElementById('conciliationDocumentNumber');
+const conciliationFileEl = document.getElementById('conciliationFile');
+const conciliationAllEl = document.getElementById('conciliationAllFiles');
+const sendConciliationBtn = document.getElementById('sendConciliationBtn');
+const conciliationResultEl = document.getElementById('conciliationResult');
+
+let conciliationFiles = [];
+
+async function loadConciliationFiles() {
+  try {
+    const res = await fetch('/api/tag/conciliation/files');
+    if (!res.ok) throw new Error('Falha ao carregar CSVs');
+    const data = await res.json();
+    conciliationFiles = data.files || [];
+    conciliationDocEl.value = data.defaultDocumentNumber || '';
+    conciliationFileEl.replaceChildren();
+    for (const file of conciliationFiles) {
+      const opt = document.createElement('option');
+      opt.value = file.url;
+      opt.textContent = file.name;
+      conciliationFileEl.appendChild(opt);
+    }
+  } catch (error) {
+    showConciliationResult({ ok: false, error: error.message });
+  }
+}
+
+conciliationAllEl.addEventListener('change', () => {
+  conciliationFileEl.disabled = conciliationAllEl.checked;
+});
+
+sendConciliationBtn.addEventListener('click', async () => {
+  const documentNumber = conciliationDocEl.value.trim();
+  const urls = conciliationAllEl.checked
+    ? conciliationFiles.map((f) => f.url)
+    : [conciliationFileEl.value].filter(Boolean);
+
+  if (!documentNumber) {
+    alert('Informe o documentNumber');
+    return;
+  }
+  if (!urls.length) {
+    alert('Nenhum CSV selecionado');
+    return;
+  }
+
+  sendConciliationBtn.disabled = true;
+  try {
+    const res = await fetch('/api/tag/conciliation/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentNumber, urls }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+    showConciliationResult(data);
+  } catch (error) {
+    showConciliationResult({ ok: false, error: error.message });
+  } finally {
+    sendConciliationBtn.disabled = false;
+  }
+});
+
+function showConciliationResult(result) {
+  const ok = Boolean(result.ok);
+  const key = result.request?.conciliationKey;
+  const head = ok
+    ? `Notificação aceita (HTTP ${result.status}, ${result.durationMs}ms) — conciliationKey ${key}`
+    : `Notificação recusada${result.status ? ` (HTTP ${result.status})` : ''}${key ? ` — conciliationKey ${key}` : ''}`;
+
+  conciliationResultEl.className = `webhook-result ${ok ? 'ok' : 'err'}`;
+  conciliationResultEl.replaceChildren();
+
+  const title = document.createElement('strong');
+  title.textContent = head;
+  conciliationResultEl.appendChild(title);
+
+  const pre = document.createElement('pre');
+  pre.textContent = JSON.stringify(
+    result.error ? { error: result.error } : { url: result.url, request: result.request, response: result.body },
+    null,
+    2,
+  );
+  conciliationResultEl.appendChild(pre);
+  conciliationResultEl.hidden = false;
+}
+
+loadConciliationFiles();
