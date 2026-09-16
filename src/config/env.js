@@ -88,3 +88,7 @@ export const WA_MOCK = {
 // Conversas ficam ao lado do SQLite (no Docker, dentro do volume /data)
 export const WA_MOCK_STATE_FILE = path.join(path.dirname(DB_PATH), 'wa-mock-state.json');
 export const WA_MOCK_TEMPLATES_FILE = path.join(__dirname, '..', 'mocks', 'whatsapp', 'templates.json');
+
+// Encaminhador do webhook.site (aba Webhook Forward)
+export const WHS_BASE_URL = (process.env.WHS_BASE_URL && process.env.WHS_BASE_URL.trim().replace(/\/$/, '')) || 'https://webhook.site';
+export const WHS_FORWARD_STATE_FILE = path.join(path.dirname(DB_PATH), 'whs-forward.json');

@@ -48,3 +48,6 @@ data.db
 
 # Estado do mock do WhatsApp (aba WhatsApp)
 wa-mock-state.json
+
+# Estado do encaminhador do webhook.site (aba Webhook Forward)
+whs-forward.json

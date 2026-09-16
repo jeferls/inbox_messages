@@ -25,6 +25,8 @@ import qrcodeRoutes from './routes/qrcode.routes.js';
 import dockerRoutes from './routes/docker.routes.js';
 import embedCheckRoutes from './routes/embed-check.routes.js';
 import waMockRoutes from './routes/wa-mock.routes.js';
+import whsForwardRoutes from './routes/whs-forward.routes.js';
+import { autoStart as whsAutoStart } from './services/whs-forward.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,11 +103,15 @@ app.use('/api', kondutoRoutes);
 app.use('/api', qrcodeRoutes);
 app.use('/api', dockerRoutes);
 app.use('/api', embedCheckRoutes);
+app.use('/api', whsForwardRoutes);
 app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);
 app.use('/', receivableDirectRoutes);
 app.use('/', holidayRoutes);
 app.use('/', waMockRoutes);
+
+// Encaminhadores do webhook.site marcados para subir junto com o servidor
+whsAutoStart().catch(() => {});
 
 // Tratativa explícita para payload grande: retorna JSON amigável
 app.use((err, req, res, next) => {

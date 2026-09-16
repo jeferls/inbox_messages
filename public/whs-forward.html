@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .config-info { max-width: 900px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; font-size: 13.5px; line-height: 1.55; color: #374151; margin-bottom: 16px; }
+      .config-info code { background: #f3f4f6; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; }
+      .grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
+      @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+
+      .fw-form { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px; }
+      .fw-form h2 { font-size: 15px; margin: 0 0 6px; }
+      .fw-form label { display: block; font-weight: 600; font-size: 13px; margin: 12px 0 5px; }
+      .fw-form input[type="text"], .fw-form input[type="number"], .fw-form input[type="password"] {
+        width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px; background: #fff;
+      }
+      .fw-form .hint { color: #6b7280; font-size: 12px; margin-top: 4px; line-height: 1.4; }
+      .fw-form .check { display: flex; align-items: center; gap: 8px; font-weight: normal; margin-top: 12px; }
+      .form-actions { margin-top: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+      button.primary:hover { background: #1d4ed8; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .form-status { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+      .form-status.ok { color: #15803d; } .form-status.err { color: #b91c1c; }
+
+      .fw-list { display: flex; flex-direction: column; gap: 12px; }
+      .fw { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+      .fw.selected { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12); }
+      .fw-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .fw-name { font-weight: 600; font-size: 15px; }
+      .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #9ca3af; }
+      .dot.on { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18); }
+      .dot.err { background: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18); }
+      .fw-head .actions { margin-left: auto; }
+      .fw-head .actions button { font-size: 12.5px; padding: 4px 9px; }
+      .fw-meta { margin-top: 8px; font-size: 12.5px; color: #4b5563; display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; }
+      .fw-meta code { font-size: 12px; word-break: break-all; }
+      .fw-stats { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+      .stat { font-size: 12px; background: #f3f4f6; border-radius: 999px; padding: 2px 9px; color: #374151; }
+      .stat.err { background: #fee2e2; color: #991b1b; }
+      .fw-error { margin-top: 8px; font-size: 12.5px; color: #b91c1c; }
+
+      .log { margin-top: 16px; }
+      .log table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+      .log th, .log td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+      .log th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; }
+      .log tr.has-detail { cursor: pointer; }
+      .log tr.has-detail:hover td { background: #f9fafb; }
+      .status { font-weight: 600; }
+      .status.ok { color: #15803d; } .status.err { color: #b91c1c; }
+      .log pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; background: #0b1020; color: #cbd5e1; border-radius: 6px; padding: 8px 10px; max-height: 260px; overflow: auto; }
+      .muted { color: #6b7280; }
+      .empty-log { padding: 16px; color: #6b7280; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+            <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link" href="/recorrencia.html">Recorrência</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
+          <a class="sidebar-link" href="/whatsapp.html">WhatsApp</a>
+          <a class="sidebar-link active" href="/whs-forward.html">Webhook Forward</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Webhook Forward</h1>
+            <div class="page-actions"><span id="pollStatus" class="status-line"></span></div>
+          </div>
+
+          <div class="config-info">
+            Lê as requisições capturadas em um token do <a href="https://webhook.site" target="_blank" rel="noopener">webhook.site</a> e reenvia
+            para uma URL local, preservando método, headers, query e corpo. Use para receber aqui webhooks de provedores que só aceitam URL pública
+            (Certta, gateways, etc.): cadastre a URL <code>https://webhook.site/&lt;token&gt;</code> no provedor e aponte o destino para o serviço local.
+            O destino é chamado de dentro do container, então use o hostname da <code>greenn-network</code> (ex.: <code>http://greenn-back-nginx/api/...</code>), não <code>localhost</code>.
+          </div>
+
+          <div class="grid">
+            <form id="fwForm" class="fw-form" autocomplete="off">
+              <h2 id="formTitle">Novo encaminhador</h2>
+              <input type="hidden" id="fwId" />
+              <label for="fwName">Nome</label>
+              <input id="fwName" type="text" placeholder="Certta local" />
+              <label for="fwToken">Token do webhook.site</label>
+              <input id="fwToken" type="text" placeholder="8f1c2d3e-...." required />
+              <div class="hint">É o UUID da URL <code>https://webhook.site/&lt;token&gt;</code>.</div>
+              <label for="fwTarget">Destino (URL local)</label>
+              <input id="fwTarget" type="text" placeholder="http://greenn-back-nginx/api/webhooks/certta" required />
+              <label for="fwApiKey">Api-Key do webhook.site (opcional)</label>
+              <input id="fwApiKey" type="password" placeholder="necessária só em tokens de conta paga/privados" />
+              <label for="fwInterval">Intervalo de consulta (ms)</label>
+              <input id="fwInterval" type="number" min="1000" step="500" value="3000" />
+              <div class="hint">Sem Api-Key o webhook.site limita a frequência; abaixo de 3000ms pode dar 429.</div>
+              <label class="check"><input id="fwAutoStart" type="checkbox" checked /> Subir junto com o servidor</label>
+              <div class="form-actions">
+                <button type="submit" id="saveBtn" class="primary">Salvar</button>
+                <button type="button" id="checkBtn">Testar token</button>
+                <button type="button" id="cancelBtn" hidden>Cancelar edição</button>
+              </div>
+              <div id="formStatus" class="form-status"></div>
+            </form>
+
+            <div>
+              <div id="fwList" class="fw-list"></div>
+              <div class="panel log" id="logPanel" hidden>
+                <div class="panel-header">
+                  <strong id="logTitle">Requisições reenviadas</strong>
+                  <div class="actions"><button type="button" id="refreshLogBtn">Atualizar</button></div>
+                </div>
+                <div id="logBody"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/whs-forward.js?v=1"></script>
+    <script src="/tab-badge.js?v=1"></script>
+  </body>
+</html>

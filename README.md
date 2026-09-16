@@ -306,3 +306,10 @@ Integração com o messages (greenn-local)
   - `MAILTRAP_API_URL=http://svc-inbox_messages` → e-mails caem no Inbox via `POST /api/send/:inboxId` (formato da API do Mailtrap: `from`, `to[]`, `subject`, `text|html`).
   - Container `messages-worker` roda os workers das filas `_send_message_email`, `_send_message_whatsapp` e `_postback_whatsapp`.
 - Volta: o mock envia o webhook para `WA_MOCK_WEBHOOK_URL` (padrão `http://messages-nginx/api/whatsapp/callback`), e o messages repassa aos postbacks do greenn-back.
+
+Webhook Forward (webhook.site → local)
+- Página: `http://localhost:8115/whs-forward.html`. Lê as requisições capturadas em um token do webhook.site e reenvia para uma URL local, preservando método, headers, query e corpo (headers hop-by-hop removidos; adiciona `x-whs-request-id` e `x-whs-created-at`).
+- Uso: cadastre `https://webhook.site/<token>` no provedor (Certta, gateway…), crie o encaminhador com esse token e o destino visto de dentro do container (ex.: `http://greenn-back-nginx/api/...`) e clique em Iniciar. Sem histórico, só o que chegar dali em diante é reenviado; "Iniciar com histórico" reenvia o que já estava capturado, do mais antigo para o mais novo.
+- O que já foi reenviado fica registrado em `whs-forward.json` (ao lado do SQLite) para não duplicar entre reinícios. Encaminhadores marcados com "Subir junto com o servidor" voltam a rodar sozinhos.
+- API: `GET/POST /api/whs-forward/forwarders`, `PUT/DELETE /api/whs-forward/forwarders/:id`, `POST .../:id/start` (`{ backfill: true }` para histórico), `POST .../:id/stop`, `POST .../:id/reset`, `GET .../:id/log`, `POST /api/whs-forward/check`.
+- Variáveis: `WHS_BASE_URL` (padrão `https://webhook.site`). Sem Api-Key o webhook.site limita a frequência de consulta; abaixo de 3s pode responder 429.
