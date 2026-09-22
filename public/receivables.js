@@ -558,6 +558,8 @@ let urPage = 0;
 let urTotal = 0;
 
 const fmtMoney = (v) => (v == null ? '-' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+// receivable_unit, settlement_obligations e settlements guardam centavos.
+const fmtCents = (v) => (v == null ? '-' : fmtMoney(Number(v) / 100));
 
 async function loadReceivableUnits() {
   const params = new URLSearchParams({ limit: UR_LIMIT, page: urPage, search: urSearchInput.value.trim() });
@@ -598,8 +600,8 @@ function renderReceivableUnits(items) {
     const tr = document.createElement('tr');
     const cells = [
       [ur.id], [`${ur.user_id}${ur.user_name ? ` · ${ur.user_name}` : ''}`], [ur.payment_arrangement ?? ur.payment_arrangement_code ?? '-'],
-      [ur.dueDate?.slice(0, 10) ?? '-'], [fmtMoney(ur.amount), 'num'], [fmtMoney(ur.pre_paid_amount), 'num'],
-      [fmtMoney(ur.settled_amount), 'num'], [ur.obligations_count, 'num'], [ur.settlements_count, 'num'],
+      [ur.dueDate?.slice(0, 10) ?? '-'], [fmtCents(ur.amount), 'num'], [fmtCents(ur.pre_paid_amount), 'num'],
+      [fmtCents(ur.settled_amount), 'num'], [ur.obligations_count, 'num'], [ur.settlements_count, 'num'],
       [ur.alerts_count, 'num'], [ur.sale_ids ?? '-'], [ur.reference ?? '-'],
     ];
     for (const [text, cls] of cells) {
@@ -735,10 +737,10 @@ function buildSummary(data) {
     stat('usuário', data.user ? `${data.user.id} · ${data.user.name}` : u.user_id),
     stat('arranjo', data.paymentArrangement ? `${data.paymentArrangement.code} · ${data.paymentArrangement.name}` : u.payment_arrangement_id),
     stat('dueDate', u.dueDate?.slice(0, 10)),
-    stat('amount', fmtMoney(u.amount), 'money'),
-    stat('pre_paid', fmtMoney(u.pre_paid_amount), 'money'),
-    stat('liquidado', fmtMoney(settled), `money ${balance === 0 && settled > 0 ? 'ok' : ''}`),
-    stat('saldo', fmtMoney(balance), `money ${balance > 0 ? 'warn' : ''}`),
+    stat('amount', fmtCents(u.amount), 'money'),
+    stat('pre_paid', fmtCents(u.pre_paid_amount), 'money'),
+    stat('liquidado', fmtCents(settled), `money ${balance === 0 && settled > 0 ? 'ok' : ''}`),
+    stat('saldo', fmtCents(balance), `money ${balance > 0 ? 'warn' : ''}`),
     stat('settlements', `${data.settlements.length}${rejected ? ` (${rejected} rejeitado${rejected > 1 ? 's' : ''})` : ''}`, rejected ? 'warn' : ''),
     stat('sales', data.saleStatementUnits.map((r) => r.sale_id).join(', ') || '-'),
     stat('SLC', `${data.slc.posSettlementGroups.length} POS · ${data.slc.anticipationReports.length} report${data.slc.anticipationReports.length === 1 ? '' : 's'}`),
