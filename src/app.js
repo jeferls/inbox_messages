@@ -12,6 +12,7 @@ import liquidacoesRoutes from './routes/liquidacoes.routes.js';
 import receivablesRoutes from './routes/receivables.routes.js';
 import receivableDirectRoutes from './routes/receivable-direct.routes.js';
 import holidayRoutes from './routes/holiday.routes.js';
+import tagAuthRoutes from './routes/tag-auth.routes.js';
 import equalsApiRoutes from './routes/equals-api.routes.js';
 import equalsMockRoutes from './routes/equals-mock.routes.js';
 import claimsRoutes from './routes/claims.routes.js';
@@ -110,6 +111,7 @@ app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);
 app.use('/', receivableDirectRoutes);
 app.use('/', holidayRoutes);
+app.use('/', tagAuthRoutes);
 app.use('/', waMockRoutes);
 
 // Encaminhadores do webhook.site marcados para subir junto com o servidor

@@ -10,7 +10,11 @@ import {
   updateReceivableProcessResponseByKey,
   updateReceivableProcessByKey,
 } from '../db/index.js';
-import { TAG_CONCILIATION } from '../config/env.js';
+import { GREENN_BACK_CONTAINER, TAG_CONCILIATION } from '../config/env.js';
+import { execInContainer, isDockerAvailable } from '../services/docker.service.js';
+import { backdateAvailableDate, listLatestSaleStatementUnits, resetReceivableUnitTables } from '../services/sale-statement-units.service.js';
+import { getGlobalSetting, setGlobalSetting } from '../services/global-settings.service.js';
+import { getReceivableUnitDetail, listReceivableUnits } from '../services/receivable-units.service.js';
 import { listConciliationFiles, sendTagConciliationWebhook } from '../services/tag-conciliation-webhook.service.js';
 
 function comboKey({ originalAssetHolder, dueDate, paymentScheme }) {
@@ -518,5 +522,128 @@ export async function sendConciliationWebhookHandler(req, res) {
     res.json(await sendTagConciliationWebhook({ documentNumber, urls, backUrl }));
   } catch (error) {
     res.status(502).json({ error: `Falha ao disparar a notificação: ${error.message}` });
+  }
+}
+
+/** Roda `php artisan tag:process-receivable_units` no container do greenn-back. */
+export async function runReceivableUnitProcessHandler(req, res) {
+  const { dryRun, date } = req.body || {};
+  const dateValue = date == null || date === '' ? null : String(date);
+
+  if (dateValue && !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return res.status(400).json({ error: "'date' deve estar no formato Y-m-d" });
+  }
+  if (dateValue && !dryRun) {
+    return res.status(400).json({ error: "'date' só é aceito junto com dryRun" });
+  }
+  if (!isDockerAvailable()) {
+    return res.status(503).json({ error: 'Socket do Docker não está montado neste container' });
+  }
+
+  const command = ['php', 'artisan', 'tag:process-receivable_units'];
+  if (dryRun) command.push('--dry-run');
+  if (dateValue) command.push(`--date=${dateValue}`);
+
+  try {
+    const result = await execInContainer(GREENN_BACK_CONTAINER, command);
+    res.json({
+      ok: result.exitCode === 0,
+      container: GREENN_BACK_CONTAINER,
+      command: command.join(' '),
+      exitCode: result.exitCode,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    });
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao executar o comando: ${e.message}` });
+  }
+}
+
+/** Lista as últimas 20 sale_statement_units para o ajuste de available_date. */
+export async function listSaleStatementUnitsHandler(_req, res) {
+  try {
+    res.json({ units: await listLatestSaleStatementUnits(20) });
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao listar sale_statement_units: ${e.message}` });
+  }
+}
+
+/** Recua a available_date do account_statement da unit para hoje - 2 dias. */
+export async function backdateSaleStatementUnitHandler(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "'id' inválido" });
+
+  try {
+    const result = await backdateAvailableDate(id);
+    if (!result.updated) return res.status(404).json({ error: 'sale_statement_unit sem account_statement relacionado' });
+    res.json({ ok: true, id, ...result });
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao ajustar available_date: ${e.message}` });
+  }
+}
+
+/** Esvazia as tabelas de UR/settlement/SLC para um teste limpo. */
+export async function resetReceivableUnitTablesHandler(_req, res) {
+  try {
+    res.json({ ok: true, cleared: await resetReceivableUnitTables() });
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao limpar as tabelas: ${e.message}` });
+  }
+}
+
+const SLC_FLOW_KEY = 'SLC_SETTLEMENT_FLOW';
+const SLC_FLOW_DEFAULT = 'WEBHOOK';
+const SLC_FLOW_SETTLEMENT = 'TAG_SETTLEMENT';
+
+// Mesma regra do SettlementsObserver: só TAG_SETTLEMENT liga o fluxo; qualquer outro valor (ou ausência) cai em WEBHOOK.
+function describeSlcFlow(setting) {
+  const normalized = String(setting.value ?? SLC_FLOW_DEFAULT).trim().toUpperCase();
+  return {
+    ...setting,
+    effective: normalized === SLC_FLOW_SETTLEMENT ? SLC_FLOW_SETTLEMENT : SLC_FLOW_DEFAULT,
+    default: SLC_FLOW_DEFAULT,
+  };
+}
+
+export async function getSlcSettlementFlowHandler(_req, res) {
+  try {
+    res.json(describeSlcFlow(await getGlobalSetting(SLC_FLOW_KEY)));
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao ler ${SLC_FLOW_KEY}: ${e.message}` });
+  }
+}
+
+export async function setSlcSettlementFlowHandler(req, res) {
+  const { enabled } = req.body || {};
+  if (typeof enabled !== 'boolean') return res.status(400).json({ error: "'enabled' deve ser booleano" });
+
+  try {
+    res.json(describeSlcFlow(await setGlobalSetting(SLC_FLOW_KEY, enabled ? SLC_FLOW_SETTLEMENT : SLC_FLOW_DEFAULT)));
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao atualizar ${SLC_FLOW_KEY}: ${e.message}` });
+  }
+}
+
+export async function listReceivableUnitsHandler(req, res) {
+  try {
+    const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 20));
+    const page = Math.max(0, Number(req.query.page) || 0);
+    const search = (req.query.search || '').toString();
+    res.json(await listReceivableUnits({ limit, page, search }));
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao listar receivable_unit: ${e.message}` });
+  }
+}
+
+export async function getReceivableUnitHandler(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "'id' inválido" });
+
+  try {
+    const detail = await getReceivableUnitDetail(id);
+    if (!detail) return res.status(404).json({ error: 'receivable_unit não encontrada' });
+    res.json(detail);
+  } catch (e) {
+    res.status(502).json({ error: `Falha ao buscar receivable_unit: ${e.message}` });
   }
 }
