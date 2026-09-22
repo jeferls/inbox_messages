@@ -619,61 +619,132 @@ function renderReceivableUnits(items) {
   }
 }
 
-function kvGrid(obj) {
-  const grid = document.createElement('div');
-  grid.className = 'kv-grid';
-  for (const [k, v] of Object.entries(obj || {})) {
-    const key = document.createElement('div');
-    key.className = 'k';
-    key.textContent = k;
-    const val = document.createElement('div');
-    val.className = 'v';
-    val.textContent = v == null ? '-' : typeof v === 'object' ? JSON.stringify(v) : String(v);
-    grid.append(key, val);
+const isLongValue = (v) => (v != null && typeof v === 'object') || (typeof v === 'string' && (v.length > 80 || v.includes('\n')));
+
+function formatValue(v) {
+  if (v == null) return null;
+  if (typeof v === 'object') return JSON.stringify(v, null, 2);
+  if (typeof v === 'string' && /^[\[{]/.test(v.trim())) {
+    try { return JSON.stringify(JSON.parse(v), null, 2); } catch { /* texto comum */ }
   }
-  return grid;
+  return String(v);
 }
 
-function rowsTable(rows) {
-  if (!rows.length) {
-    const p = document.createElement('p');
-    p.className = 'status-line';
+// Um registro = card com cabeçalho (id + campos-chave) e grade rótulo/valor com o resto.
+function recordCard(row, { title = 'id', highlights = [] } = {}) {
+  const card = document.createElement('div');
+  card.className = 'rec';
+
+  const head = document.createElement('div');
+  head.className = 'rec-head';
+  const tag = document.createElement('span');
+  tag.className = 'tag';
+  tag.textContent = `${title} #${row.id ?? '-'}`;
+  head.appendChild(tag);
+  for (const key of highlights) {
+    if (!(key in row)) continue;
+    const hl = document.createElement('span');
+    hl.className = 'hl';
+    const b = document.createElement('b');
+    b.textContent = key;
+    hl.append(b, document.createTextNode(formatValue(row[key]) ?? '-'));
+    head.appendChild(hl);
+  }
+  card.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'rec-body';
+  const shown = new Set(['id', ...highlights]);
+  const entries = Object.entries(row).filter(([k]) => !shown.has(k));
+  for (const [k, v] of entries.filter(([, v]) => !isLongValue(v))) body.appendChild(kvCell(k, v));
+  for (const [k, v] of entries.filter(([, v]) => isLongValue(v))) body.appendChild(kvCell(k, v, true));
+  card.appendChild(body);
+  return card;
+}
+
+function kvCell(k, v, wide = false) {
+  const cell = document.createElement('div');
+  cell.className = wide ? 'kv wide' : 'kv';
+  const key = document.createElement('div');
+  key.className = 'k';
+  key.textContent = k;
+  const val = document.createElement('div');
+  const text = formatValue(v);
+  val.className = text == null ? 'v null' : 'v';
+  val.textContent = text ?? 'null';
+  cell.append(key, val);
+  return cell;
+}
+
+function recordList(rows, opts) {
+  if (!rows?.length) {
+    const p = document.createElement('div');
+    p.className = 'ur-empty';
     p.textContent = 'nenhum registro';
-    return p;
+    return [p];
   }
-  const wrap = document.createElement('div');
-  wrap.className = 'ur-table-wrap';
-  const table = document.createElement('table');
-  table.className = 'ur-table';
-  const cols = Object.keys(rows[0]);
-  const thead = document.createElement('thead');
-  const hr = document.createElement('tr');
-  for (const c of cols) {
-    const th = document.createElement('th');
-    th.textContent = c;
-    hr.appendChild(th);
-  }
-  thead.appendChild(hr);
-  const tbody = document.createElement('tbody');
-  for (const row of rows) {
-    const tr = document.createElement('tr');
-    for (const c of cols) {
-      const td = document.createElement('td');
-      const v = row[c];
-      td.textContent = v == null ? '-' : typeof v === 'object' ? JSON.stringify(v) : String(v);
-      tr.appendChild(td);
-    }
-    tbody.appendChild(tr);
-  }
-  table.append(thead, tbody);
-  wrap.appendChild(table);
-  return wrap;
+  return rows.map((r) => recordCard(r, opts));
 }
 
-function section(title, node) {
-  const h = document.createElement('h3');
-  h.textContent = title;
-  return [h, node];
+function subtitle(text) {
+  const el = document.createElement('div');
+  el.className = 'ur-subtitle';
+  el.textContent = text;
+  return el;
+}
+
+// Bloco colapsável com contagem; abre sozinho quando tem conteúdo.
+function group(title, count, nodes) {
+  const details = document.createElement('details');
+  details.className = 'ur-group';
+  details.open = count > 0;
+  const summary = document.createElement('summary');
+  summary.textContent = title;
+  const badge = document.createElement('span');
+  badge.className = count > 0 ? 'count' : 'count empty';
+  badge.textContent = count > 0 ? `${count} registro${count > 1 ? 's' : ''}` : 'vazio';
+  summary.appendChild(badge);
+  const body = document.createElement('div');
+  body.className = 'ur-group-body';
+  body.append(...nodes);
+  details.append(summary, body);
+  return details;
+}
+
+function stat(label, value, cls = '') {
+  const el = document.createElement('div');
+  el.className = 'ur-stat';
+  const k = document.createElement('div');
+  k.className = 'k';
+  k.textContent = label;
+  const v = document.createElement('div');
+  v.className = `v ${cls}`.trim();
+  v.textContent = value ?? '-';
+  el.append(k, v);
+  return el;
+}
+
+function buildSummary(data) {
+  const u = data.unit;
+  const settled = data.settlementObligations.reduce((acc, o) => acc + Number(o.settled_amount ?? 0), 0);
+  const balance = data.settlementObligations.reduce((acc, o) => acc + Number(o.balance_amount ?? 0), 0);
+  const rejected = data.settlements.filter((s) => s.is_rejected).length;
+  const wrap = document.createElement('div');
+  wrap.className = 'ur-summary';
+  wrap.append(
+    stat('usuário', data.user ? `${data.user.id} · ${data.user.name}` : u.user_id),
+    stat('arranjo', data.paymentArrangement ? `${data.paymentArrangement.code} · ${data.paymentArrangement.name}` : u.payment_arrangement_id),
+    stat('dueDate', u.dueDate?.slice(0, 10)),
+    stat('amount', fmtMoney(u.amount), 'money'),
+    stat('pre_paid', fmtMoney(u.pre_paid_amount), 'money'),
+    stat('liquidado', fmtMoney(settled), `money ${balance === 0 && settled > 0 ? 'ok' : ''}`),
+    stat('saldo', fmtMoney(balance), `money ${balance > 0 ? 'warn' : ''}`),
+    stat('settlements', `${data.settlements.length}${rejected ? ` (${rejected} rejeitado${rejected > 1 ? 's' : ''})` : ''}`, rejected ? 'warn' : ''),
+    stat('sales', data.saleStatementUnits.map((r) => r.sale_id).join(', ') || '-'),
+    stat('SLC', `${data.slc.posSettlementGroups.length} POS · ${data.slc.anticipationReports.length} report${data.slc.anticipationReports.length === 1 ? '' : 's'}`),
+    stat('alertas', data.alerts.length, data.alerts.length ? 'warn' : ''),
+  );
+  return wrap;
 }
 
 async function openReceivableUnit(id) {
@@ -686,27 +757,58 @@ async function openReceivableUnit(id) {
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
     urModalTitle.textContent = `UR #${id} · ${data.unit.reference ?? data.unit.key}`;
-    urModalBody.replaceChildren(
-      ...section('receivable_unit', kvGrid(data.unit)),
-      ...section('payment_arrangement', kvGrid(data.paymentArrangement)),
-      ...section('user', kvGrid(data.user)),
-      ...section(`settlement_obligations (${data.settlementObligations.length})`, rowsTable(data.settlementObligations)),
-      ...section(`settlements (${data.settlements.length})`, rowsTable(data.settlements)),
-      ...section(`settlement_obligation_payments (${data.settlementObligationPayments.length})`, rowsTable(data.settlementObligationPayments)),
-      ...section(`sale_statement_units + sales + account_statements (${data.saleStatementUnits.length})`, rowsTable(data.saleStatementUnits)),
-      ...section(`slc_pos_settlement_groups (${data.slc.posSettlementGroups.length})`, rowsTable(data.slc.posSettlementGroups)),
-      ...section(`slc_anticipation_reports (${data.slc.anticipationReports.length})`, rowsTable(data.slc.anticipationReports)),
-      ...section(`slc_anticipation_reports_attempts (${data.slc.anticipationReportAttempts.length})`, rowsTable(data.slc.anticipationReportAttempts)),
-      ...section(`slc_centralizer_groups (${data.slc.centralizerGroups.length})`, rowsTable(data.slc.centralizerGroups)),
-      ...section(`slc_settlement_group_roots (${data.slc.settlementGroupRoots.length})`, rowsTable(data.slc.settlementGroupRoots)),
-      ...section(`slc_settlement_conciliation_items (${data.slc.conciliationItems.length})`, rowsTable(data.slc.conciliationItems)),
-      ...section(`slc_settlement_conciliations (${data.slc.conciliations.length})`, rowsTable(data.slc.conciliations)),
-      ...section(`tag_ur_alerts (${data.alerts.length})`, rowsTable(data.alerts)),
-      ...section(`reconciliation_receivables_units (${data.reconciliations.length})`, rowsTable(data.reconciliations)),
-    );
+
+    const slc = data.slc;
+    const slcCount = slc.posSettlementGroups.length + slc.anticipationReports.length + slc.anticipationReportAttempts.length
+      + slc.centralizerGroups.length + slc.settlementGroupRoots.length + slc.conciliationItems.length + slc.conciliations.length;
+
     const pre = document.createElement('pre');
     pre.textContent = JSON.stringify(data, null, 2);
-    urModalBody.append(...section('JSON completo', pre));
+
+    urModalBody.replaceChildren(
+      buildSummary(data),
+      group('Unidade de recebível', 1, [
+        recordCard(data.unit, { title: 'receivable_unit', highlights: ['reference', 'dueDate', 'amount'] }),
+        subtitle('payment_arrangement'),
+        ...recordList(data.paymentArrangement ? [data.paymentArrangement] : [], { title: 'payment_arrangement', highlights: ['code', 'name'] }),
+        subtitle('user'),
+        ...recordList(data.user ? [data.user] : [], { title: 'user', highlights: ['name', 'email'] }),
+      ]),
+      group('Obrigações e liquidações', data.settlementObligations.length + data.settlements.length + data.settlementObligationPayments.length, [
+        subtitle('settlement_obligations'),
+        ...recordList(data.settlementObligations, { title: 'obligation', highlights: ['total_amount', 'settled_amount', 'balance_amount', 'expected_settlement_date'] }),
+        subtitle('settlements'),
+        ...recordList(data.settlements, { title: 'settlement', highlights: ['reference', 'amount', 'settlement_date', 'is_rejected', 'payment_scheme'] }),
+        subtitle('settlement_obligation_payments'),
+        ...recordList(data.settlementObligationPayments, { title: 'payment', highlights: ['amount', 'status', 'paid_by'] }),
+      ]),
+      group('Vendas e extrato', data.saleStatementUnits.length, [
+        ...recordList(data.saleStatementUnits, { title: 'sale_statement_unit', highlights: ['sale_id', 'sale_status', 'sale_total', 'statement_type', 'statement_balance', 'statement_available_date'] }),
+      ]),
+      group('SLC', slcCount, [
+        subtitle('slc_pos_settlement_groups'),
+        ...recordList(slc.posSettlementGroups, { title: 'pos_group', highlights: ['settlement_id', 'payment_amount', 'payment_date', 'pos_creditor_control_number'] }),
+        subtitle('slc_anticipation_reports'),
+        ...recordList(slc.anticipationReports, { title: 'report', highlights: ['status', 'flow_origin', 'settlement_id', 'flc_amount', 'payment_date'] }),
+        subtitle('slc_anticipation_reports_attempts'),
+        ...recordList(slc.anticipationReportAttempts, { title: 'attempt', highlights: ['attempt_number', 'status', 'error_code'] }),
+        subtitle('slc_centralizer_groups'),
+        ...recordList(slc.centralizerGroups, { title: 'centralizer_group', highlights: ['centralizer_creditor_control_number', 'centralizer_document'] }),
+        subtitle('slc_settlement_group_roots'),
+        ...recordList(slc.settlementGroupRoots, { title: 'group_root', highlights: ['status', 'num_ctrl_cip', 'sent_at'] }),
+        subtitle('slc_settlement_conciliation_items'),
+        ...recordList(slc.conciliationItems, { title: 'conciliation_item', highlights: ['status', 'action', 'settlement_date', 'csv_settlement_amount', 'local_settlement_amount'] }),
+        subtitle('slc_settlement_conciliations'),
+        ...recordList(slc.conciliations, { title: 'conciliation', highlights: ['key', 'status', 'reconciled_date'] }),
+      ]),
+      group('Alertas e reconciliação TAG', data.alerts.length + data.reconciliations.length, [
+        subtitle('tag_ur_alerts'),
+        ...recordList(data.alerts, { title: 'alert', highlights: ['alert_type', 'decision', 'withdraw_id'] }),
+        subtitle('reconciliation_receivables_units'),
+        ...recordList(data.reconciliations, { title: 'reconciliation', highlights: ['status', 'reconciliation_key'] }),
+      ]),
+      (() => { const g = group('JSON completo', 0, [pre]); g.open = false; g.querySelector('.count').textContent = ''; return g; })(),
+    );
   } catch (error) {
     urModalBody.textContent = `Falha ao carregar: ${error.message}`;
   }
