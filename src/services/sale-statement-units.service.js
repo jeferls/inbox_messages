@@ -1,4 +1,4 @@
-import { getGreennPool } from './greenn-db.js';
+import { getGreennPool, tableExists } from './greenn-db.js';
 
 /** Últimas N sale_statement_units com a available_date do account_statement relacionado. */
 export async function listLatestSaleStatementUnits(limit = 20) {
@@ -66,7 +66,11 @@ export async function resetReceivableUnitTables() {
   const conn = await getGreennPool().getConnection();
   try {
     const counts = {};
+    const tables = [];
     for (const table of UR_RESET_TABLES) {
+      if (await tableExists(conn, table)) tables.push(table);
+    }
+    for (const table of tables) {
       const [[row]] = await conn.query(`SELECT COUNT(*) AS total FROM \`${table}\``);
       counts[table] = row.total;
     }
@@ -75,7 +79,7 @@ export async function resetReceivableUnitTables() {
     // as FKs entre elas exigem desligar a checagem só nesta conexão.
     await conn.query('SET FOREIGN_KEY_CHECKS = 0');
     try {
-      for (const table of UR_RESET_TABLES) {
+      for (const table of tables) {
         await conn.query(`TRUNCATE TABLE \`${table}\``);
       }
     } finally {
