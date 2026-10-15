@@ -24,11 +24,17 @@
       .flag-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
       .flag-row .mono { flex: 1; }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-      .user-row { display: flex; align-items: center; gap: 12px; padding: 6px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+      .user-row { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
       .user-row span:first-child { flex: 1; }
-      #userForm { display: flex; gap: 8px; padding: 12px; }
-      #userRef { flex: 1; }
+      .modal-card.small { width: min(100%, 640px); }
+      .modal-header h2 { margin: 0 6px; font-size: 15px; }
+      .modal-form { display: flex; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+      .modal-form input { flex: 1; }
+      .modal-list { overflow: auto; }
+      .modal-note { padding: 8px 14px; font-size: 13px; color: #374151; }
+      .modal-note:empty { display: none; }
       #backPath { width: 420px; max-width: 100%; }
+      .page-header, .page-actions { flex-wrap: wrap; gap: 8px; }
     </style>
   </head>
   <body>
@@ -60,6 +66,7 @@
             <div class="page-actions">
               <input id="backPath" type="text" placeholder="/caminho/para/greenn-local/greenn-back" autocomplete="off" />
               <button id="loadBtn" type="button">Carregar</button>
+              <button id="byUserBtn" type="button" disabled>Por usuário</button>
             </div>
           </div>
 
@@ -71,20 +78,51 @@
             <div class="panel-header"><input id="flagFilter" type="search" placeholder="Filtrar flags..." /></div>
             <div id="flagList"><div class="empty">Informe o caminho do greenn-back e clique em Carregar</div></div>
           </section>
-
-          <section class="panel" id="userFlagsPanel" hidden>
-            <div class="panel-header"><strong id="userFlagsTitle"></strong></div>
-            <div id="userFlagsList"></div>
-            <form id="userForm">
-              <input id="userRef" type="text" placeholder="ID ou e-mail do usuário" autocomplete="off" required />
-              <button type="submit">Adicionar</button>
-            </form>
-          </section>
         </div>
       </div>
     </div>
 
-    <script src="/flags.js?v=1"></script>
+    <!-- Usuários de uma flag -->
+    <div id="flagUsersModal" class="modal" hidden>
+      <div class="modal-card small" role="dialog" aria-modal="true" aria-labelledby="flagUsersTitle">
+        <div class="modal-header">
+          <h2 id="flagUsersTitle"></h2>
+          <div class="spacer"></div>
+          <button type="button" data-close>Fechar</button>
+        </div>
+        <form id="flagUsersForm" class="modal-form">
+          <input name="user" type="text" placeholder="ID ou e-mail do usuário" autocomplete="off" required />
+          <button type="submit">Adicionar usuário</button>
+        </form>
+        <div class="modal-note" id="flagUsersNote"></div>
+        <div class="modal-list" id="flagUsersList"></div>
+      </div>
+    </div>
+
+    <!-- Flags de um usuário -->
+    <div id="userModal" class="modal" hidden>
+      <div class="modal-card small" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+        <div class="modal-header">
+          <h2 id="userModalTitle">Flags por usuário</h2>
+          <div class="spacer"></div>
+          <button type="button" class="danger" id="userRemoveAll" hidden>Remover todas</button>
+          <button type="button" data-close>Fechar</button>
+        </div>
+        <form id="userSearchForm" class="modal-form">
+          <input name="user" type="text" placeholder="ID ou e-mail do usuário" autocomplete="off" required />
+          <button type="submit">Buscar</button>
+        </form>
+        <form id="userAddForm" class="modal-form" hidden>
+          <input name="flag" type="text" list="flagOptions" placeholder="Flag para adicionar" autocomplete="off" required />
+          <button type="submit">Adicionar flag</button>
+        </form>
+        <datalist id="flagOptions"></datalist>
+        <div class="modal-note" id="userNote"></div>
+        <div class="modal-list" id="userFlagList"></div>
+      </div>
+    </div>
+
+    <script src="/flags.js?v=2"></script>
     <script src="/tab-badge.js?v=1"></script>
   </body>
 </html>

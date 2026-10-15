@@ -8,14 +8,25 @@ const flagList = document.getElementById('flagList');
 const flagWarning = document.getElementById('flagWarning');
 const flagFilter = document.getElementById('flagFilter');
 
-const userFlagsPanel = document.getElementById('userFlagsPanel');
-const userFlagsTitle = document.getElementById('userFlagsTitle');
-const userFlagsList = document.getElementById('userFlagsList');
-const userForm = document.getElementById('userForm');
-const userRef = document.getElementById('userRef');
+const byUserBtn = document.getElementById('byUserBtn');
 
-const state = { flags: [], info: null, selectedFlag: null };
-const currentPath = () => backPathInput.value.trim();
+const flagUsersModal = document.getElementById('flagUsersModal');
+const flagUsersTitle = document.getElementById('flagUsersTitle');
+const flagUsersForm = document.getElementById('flagUsersForm');
+const flagUsersNote = document.getElementById('flagUsersNote');
+const flagUsersList = document.getElementById('flagUsersList');
+
+const userModal = document.getElementById('userModal');
+const userSearchForm = document.getElementById('userSearchForm');
+const userAddForm = document.getElementById('userAddForm');
+const userRemoveAll = document.getElementById('userRemoveAll');
+const userNote = document.getElementById('userNote');
+const userFlagList = document.getElementById('userFlagList');
+const flagOptions = document.getElementById('flagOptions');
+
+// loadedPath: path do último Carregar com sucesso; toda escrita usa ele, não o input (que pode ter sido editado).
+const state = { flags: [], info: null, loadedPath: '', selectedFlag: null, selectedUser: null };
+const currentPath = () => state.loadedPath;
 
 async function api(method, url, body) {
   const res = await fetch(url, {
@@ -88,7 +99,7 @@ async function toggle(input) {
     const res = await fetch('/api/flags-panel/flag', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: backPathInput.value.trim(), flag, enabled: input.checked }),
+      body: JSON.stringify({ path: currentPath(), flag, enabled: input.checked }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -103,49 +114,189 @@ async function toggle(input) {
   }
 }
 
-async function loadUsers(flag) {
-  state.selectedFlag = flag;
-  showError('');
+function openModal(modal) {
+  modal.hidden = false;
+  modal.querySelector('input')?.focus();
+}
+
+function closeModal(modal) {
+  modal.hidden = true;
+}
+
+for (const modal of [flagUsersModal, userModal]) {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target.matches('[data-close]')) closeModal(modal);
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') [flagUsersModal, userModal].forEach(closeModal);
+});
+
+function setNote(node, message, isError = false) {
+  node.textContent = message || '';
+  node.style.color = isError ? '#b91c1c' : '';
+}
+
+// Desabilita o botão do form enquanto a requisição roda (evita duplicar no clique duplo).
+async function submitting(form, fn) {
+  const btn = form.querySelector('button[type="submit"]');
+  btn.disabled = true;
   try {
-    const data = await api('GET', `/api/flags-panel/user-flags?path=${encodeURIComponent(currentPath())}&flag=${encodeURIComponent(flag)}`);
-    userFlagsPanel.hidden = false;
-    userFlagsTitle.textContent = `Usuários com a flag ${flag}`;
-    userFlagsList.replaceChildren();
-    if (data.items.length === 0) userFlagsList.append(el('div', 'empty', 'Nenhum usuário com essa flag'));
-    for (const item of data.items) {
-      const row = el('div', 'user-row');
-      row.append(el('span', 'mono', `#${item.id} - user_id ${item.user_id} - ${item.email || 'sem e-mail'} - ${item.created_at}`));
-      const rm = el('button', 'danger', 'Remover');
-      rm.type = 'button';
-      rm.dataset.remove = item.id;
-      row.append(rm);
-      userFlagsList.append(row);
-    }
-  } catch (error) {
-    showError(error.message);
+    await fn();
+  } finally {
+    btn.disabled = false;
   }
 }
 
-userFlagsList.addEventListener('click', async (e) => {
-  const id = e.target.dataset?.remove;
-  if (!id || !confirm('Remover este usuário da flag?')) return;
+function listRow(text, removeId) {
+  const row = el('div', 'user-row');
+  row.append(el('span', 'mono', text));
+  const rm = el('button', 'danger', 'Remover');
+  rm.type = 'button';
+  rm.dataset.remove = removeId;
+  row.append(rm);
+  return row;
+}
+
+async function removeById(id, message) {
+  if (!confirm(message)) return false;
+  await api('DELETE', '/api/flags-panel/user-flags', { path: currentPath(), id });
+  return true;
+}
+
+// ---- Modal: usuários de uma flag ----
+
+async function loadFlagUsers(flag) {
+  const data = await api('GET', `/api/flags-panel/user-flags?path=${encodeURIComponent(currentPath())}&flag=${encodeURIComponent(flag)}`);
+  if (state.selectedFlag !== flag) return; // resposta atrasada de outra flag
+  flagUsersList.replaceChildren();
+  if (data.items.length === 0) flagUsersList.append(el('div', 'empty', 'Nenhum usuário com essa flag'));
+  for (const item of data.items) {
+    flagUsersList.append(listRow(`user_id ${item.user_id} - ${item.email || 'sem e-mail'} - ${item.created_at}`, item.id));
+  }
+}
+
+async function openFlagUsers(flag) {
+  state.selectedFlag = flag;
+  flagUsersTitle.textContent = `Usuários com a flag ${flag}`;
+  flagUsersList.replaceChildren(el('div', 'empty', 'Carregando...'));
+  setNote(flagUsersNote, '');
+  flagUsersForm.reset();
+  openModal(flagUsersModal);
   try {
-    await api('DELETE', '/api/flags-panel/user-flags', { path: currentPath(), id });
-    loadUsers(state.selectedFlag);
+    await loadFlagUsers(flag);
   } catch (error) {
-    showError(error.message);
+    setNote(flagUsersNote, error.message, true);
+  }
+}
+
+flagUsersForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  submitting(flagUsersForm, async () => {
+    try {
+      const user = flagUsersForm.elements.user.value;
+      const data = await api('POST', '/api/flags-panel/user-flags', { path: currentPath(), flag: state.selectedFlag, user });
+      setNote(flagUsersNote, data.alreadyExisted ? `${data.email || data.user_id} já tinha essa flag` : `${data.email || data.user_id} adicionado`);
+      flagUsersForm.reset();
+      await loadFlagUsers(state.selectedFlag);
+    } catch (error) {
+      setNote(flagUsersNote, error.message, true);
+    }
+  });
+});
+
+flagUsersList.addEventListener('click', async (e) => {
+  const id = e.target.dataset?.remove;
+  if (!id) return;
+  try {
+    if (!(await removeById(id, 'Remover este usuário da flag?'))) return;
+    setNote(flagUsersNote, 'Usuário removido da flag');
+    await loadFlagUsers(state.selectedFlag);
+  } catch (error) {
+    setNote(flagUsersNote, error.message, true);
   }
 });
 
-userForm.addEventListener('submit', async (e) => {
+// ---- Modal: flags de um usuário ----
+
+async function loadUserFlags(user) {
+  const data = await api('GET', `/api/flags-panel/user-flags?path=${encodeURIComponent(currentPath())}&user=${encodeURIComponent(user)}`);
+  state.selectedUser = user;
+  userModal.querySelector('h2').textContent = `Flags de ${data.email || 'user_id ' + data.user_id} (user_id ${data.user_id})`;
+  userAddForm.hidden = false;
+  userRemoveAll.hidden = data.items.length === 0;
+  userFlagList.replaceChildren();
+  if (data.items.length === 0) userFlagList.append(el('div', 'empty', 'Esse usuário não tem nenhuma flag'));
+  for (const item of data.items) userFlagList.append(listRow(`${item.flag} - ${item.created_at}`, item.id));
+}
+
+function resetUserModal() {
+  state.selectedUser = null;
+  userModal.querySelector('h2').textContent = 'Flags por usuário';
+  userSearchForm.reset();
+  userAddForm.reset();
+  userAddForm.hidden = true;
+  userRemoveAll.hidden = true;
+  userFlagList.replaceChildren();
+  setNote(userNote, '');
+}
+
+byUserBtn.addEventListener('click', () => {
+  resetUserModal();
+  flagOptions.replaceChildren(...state.flags.map((f) => Object.assign(document.createElement('option'), { value: f.flag })));
+  openModal(userModal);
+});
+
+userSearchForm.addEventListener('submit', (e) => {
   e.preventDefault();
+  submitting(userSearchForm, async () => {
+    setNote(userNote, '');
+    try {
+      await loadUserFlags(userSearchForm.elements.user.value.trim());
+    } catch (error) {
+      userAddForm.hidden = true;
+      userRemoveAll.hidden = true;
+      userFlagList.replaceChildren();
+      setNote(userNote, error.message, true);
+    }
+  });
+});
+
+userAddForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  submitting(userAddForm, async () => {
+    try {
+      const flag = userAddForm.elements.flag.value.trim();
+      const data = await api('POST', '/api/flags-panel/user-flags', { path: currentPath(), flag, user: state.selectedUser });
+      setNote(userNote, data.alreadyExisted ? `Usuário já tinha a flag ${flag}` : `Flag ${flag} adicionada`);
+      userAddForm.reset();
+      await loadUserFlags(state.selectedUser);
+    } catch (error) {
+      setNote(userNote, error.message, true);
+    }
+  });
+});
+
+userFlagList.addEventListener('click', async (e) => {
+  const id = e.target.dataset?.remove;
+  if (!id) return;
   try {
-    const data = await api('POST', '/api/flags-panel/user-flags', { path: currentPath(), flag: state.selectedFlag, user: userRef.value });
-    statusLine.textContent = data.alreadyExisted ? 'Usuário já tinha essa flag' : 'Usuário adicionado';
-    userRef.value = '';
-    loadUsers(state.selectedFlag);
+    if (!(await removeById(id, 'Remover esta flag do usuário?'))) return;
+    setNote(userNote, 'Flag removida do usuário');
+    await loadUserFlags(state.selectedUser);
   } catch (error) {
-    showError(error.message);
+    setNote(userNote, error.message, true);
+  }
+});
+
+userRemoveAll.addEventListener('click', async () => {
+  if (!confirm('Remover TODAS as flags deste usuário?')) return;
+  try {
+    const data = await api('DELETE', '/api/flags-panel/user-flags', { path: currentPath(), user: state.selectedUser });
+    setNote(userNote, `${data.removed} flag(s) removida(s)`);
+    await loadUserFlags(state.selectedUser);
+  } catch (error) {
+    setNote(userNote, error.message, true);
   }
 });
 
@@ -157,6 +308,8 @@ async function load() {
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
     localStorage.setItem(LS_KEY, path);
+    state.loadedPath = path;
+    byUserBtn.disabled = false;
     state.flags = data.flags;
     state.info = data;
     renderStatus();
@@ -167,7 +320,7 @@ async function load() {
 }
 
 flagList.addEventListener('click', (e) => {
-  if (e.target.dataset?.users) loadUsers(e.target.dataset.users);
+  if (e.target.dataset?.users) openFlagUsers(e.target.dataset.users);
 });
 flagList.addEventListener('change', (e) => {
   if (e.target.matches('input[data-flag]')) toggle(e.target);

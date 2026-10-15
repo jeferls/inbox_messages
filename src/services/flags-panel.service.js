@@ -133,15 +133,29 @@ export async function listUserFlags(input, flag) {
   });
 }
 
-/** `user` = ID numérico ou e-mail. user_flags não tem unique, então checa duplicata antes do INSERT. Sem cache (FlagHelper não cacheia). */
-export async function addUserFlag(input, flag, user) {
-  if (!isValidFlag(flag)) throw fail(400, 'Nome de flag inválido');
+/** `user` = ID numérico ou e-mail; resolve para a linha de `users` ou lança 400/404. */
+async function findUser(conn, user) {
   const ref = String(user ?? '').trim();
   const byId = ID_RE.test(ref);
   if (!byId && !ref.includes('@')) throw fail(400, 'Informe o ID numérico ou o e-mail do usuário');
+  const [[found]] = await conn.query(`SELECT id, email FROM users WHERE ${byId ? 'id' : 'email'} = ? LIMIT 1`, [ref]);
+  if (!found) throw fail(404, 'Usuário não encontrado');
+  return found;
+}
+
+export async function listFlagsOfUser(input, user) {
   return withDb(input, async (conn) => {
-    const [[found]] = await conn.query(`SELECT id, email FROM users WHERE ${byId ? 'id' : 'email'} = ? LIMIT 1`, [ref]);
-    if (!found) throw fail(404, 'Usuário não encontrado');
+    const found = await findUser(conn, user);
+    const [items] = await conn.query('SELECT id, flag, created_at FROM user_flags WHERE user_id = ? ORDER BY flag', [found.id]);
+    return { user_id: found.id, email: found.email, items };
+  });
+}
+
+/** user_flags não tem unique, então checa duplicata antes do INSERT. Sem cache (FlagHelper não cacheia). */
+export async function addUserFlag(input, flag, user) {
+  if (!isValidFlag(flag)) throw fail(400, 'Nome de flag inválido');
+  return withDb(input, async (conn) => {
+    const found = await findUser(conn, user);
     const out = { user_id: found.id, email: found.email, flag };
     const [[dup]] = await conn.query('SELECT id FROM user_flags WHERE user_id = ? AND flag = ? LIMIT 1', [found.id, flag]);
     if (dup) return { id: dup.id, ...out, alreadyExisted: true };
@@ -156,5 +170,14 @@ export async function removeUserFlag(input, id) {
     const [r] = await conn.query('DELETE FROM user_flags WHERE id = ?', [id]);
     if (r.affectedRows === 0) throw fail(404, 'Registro de user_flags não encontrado');
     return { removed: true, id };
+  });
+}
+
+/** Remove todas as user_flags de um usuário. */
+export async function removeAllUserFlags(input, user) {
+  return withDb(input, async (conn) => {
+    const found = await findUser(conn, user);
+    const [r] = await conn.query('DELETE FROM user_flags WHERE user_id = ?', [found.id]);
+    return { removed: r.affectedRows, user_id: found.id };
   });
 }

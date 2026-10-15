@@ -164,6 +164,32 @@ test('e2e: user_flags listar/adicionar/remover', { skip }, async (t) => {
   }
 });
 
+test('e2e: user_flags por usuario listar/remover todas', { skip }, async (t) => {
+  // Usuário sem nenhuma user_flag, para o "remover todas" não apagar dado real do dev.
+  const [[user]] = await withDb(E2E, (c) =>
+    c.query('SELECT u.id, u.email FROM users u WHERE u.email IS NOT NULL AND NOT EXISTS (SELECT 1 FROM user_flags uf WHERE uf.user_id = u.id) ORDER BY u.id LIMIT 1'),
+  );
+  if (!user) return t.skip('sem usuario livre de user_flags no banco de dev');
+  try {
+    await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: user.email });
+    await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: `${SMOKE}-2`, user: user.email });
+
+    let body = await (await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, user: String(user.id) })}`)).json();
+    assert.equal(Number(body.user_id), Number(user.id));
+    assert.deepEqual(body.items.map((i) => i.flag).sort(), [SMOKE, `${SMOKE}-2`]);
+
+    const res = await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, user: user.email });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).removed, 2);
+    body = await (await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, user: user.email })}`)).json();
+    assert.equal(body.items.length, 0);
+
+    assert.equal((await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, user: 'nao-existe@example.invalid' })}`)).status, 404);
+  } finally {
+    await withDb(E2E, (c) => c.query('DELETE FROM user_flags WHERE flag IN (?, ?)', [SMOKE, `${SMOKE}-2`]));
+  }
+});
+
 after(() => {
   server?.close();
 });
