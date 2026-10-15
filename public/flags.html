@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .switch { position: relative; display: inline-block; width: 52px; height: 28px; flex-shrink: 0; }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .switch .slider { position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; cursor: pointer; transition: background 0.15s ease; }
+      .switch .slider::before { content: ''; position: absolute; height: 22px; width: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+      .switch input:checked + .slider { background: #16a34a; }
+      .switch input:checked + .slider::before { transform: translateX(24px); }
+      .switch input:disabled + .slider { opacity: 0.55; cursor: progress; }
+      .switch input:focus-visible + .slider { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+      .flag-error { color: #b91c1c; font-size: 13px; margin-top: 8px; }
+      .badge { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 600; border: 1px solid transparent; }
+      .badge.st-pending { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+
+      .flag-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
+      .flag-row .mono { flex: 1; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+      #backPath { width: 420px; max-width: 100%; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/email-templates.html">E-mails</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link" href="/recorrencia.html">Recorrência</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
+          <a class="sidebar-link" href="/whatsapp.html">WhatsApp</a>
+          <a class="sidebar-link" href="/whs-forward.html">Webhook Forward</a>
+          <a class="sidebar-link active" href="/flags.html">Flags</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Flags do greenn-back</h1>
+            <div class="page-actions">
+              <input id="backPath" type="text" placeholder="/caminho/para/greenn-local/greenn-back" autocomplete="off" />
+              <button id="loadBtn" type="button">Carregar</button>
+            </div>
+          </div>
+
+          <div class="status-line" id="statusLine"></div>
+          <div class="flag-error" id="flagError" hidden></div>
+
+          <section class="panel">
+            <div id="flagList"><div class="empty">Informe o caminho do greenn-back e clique em Carregar</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script src="/flags.js?v=1"></script>
+    <script src="/tab-badge.js?v=1"></script>
+  </body>
+</html>
