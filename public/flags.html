@@ -24,6 +24,10 @@
       .flag-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
       .flag-row .mono { flex: 1; }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+      .user-row { display: flex; align-items: center; gap: 12px; padding: 6px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+      .user-row span:first-child { flex: 1; }
+      #userForm { display: flex; gap: 8px; padding: 12px; }
+      #userRef { flex: 1; }
       #backPath { width: 420px; max-width: 100%; }
     </style>
   </head>
@@ -66,6 +70,15 @@
           <section class="panel">
             <div class="panel-header"><input id="flagFilter" type="search" placeholder="Filtrar flags..." /></div>
             <div id="flagList"><div class="empty">Informe o caminho do greenn-back e clique em Carregar</div></div>
+          </section>
+
+          <section class="panel" id="userFlagsPanel" hidden>
+            <div class="panel-header"><strong id="userFlagsTitle"></strong></div>
+            <div id="userFlagsList"></div>
+            <form id="userForm">
+              <input id="userRef" type="text" placeholder="ID ou e-mail do usuário" autocomplete="off" required />
+              <button type="submit">Adicionar</button>
+            </form>
           </section>
         </div>
       </div>

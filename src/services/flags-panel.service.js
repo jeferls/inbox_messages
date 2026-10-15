@@ -119,3 +119,42 @@ export async function toggleFlag(input, flag, enabled) {
   const state = await withDb(input, (conn) => setGlobalFlag(flag, enabled, conn));
   return { ...state, ...(await forgetBackCache(`feature_flag_${flag}`)) };
 }
+
+const ID_RE = /^\d+$/;
+
+export async function listUserFlags(input, flag) {
+  if (!isValidFlag(flag)) throw fail(400, 'Nome de flag inválido');
+  return withDb(input, async (conn) => {
+    const [items] = await conn.query(
+      'SELECT uf.id, uf.user_id, u.email, uf.created_at FROM user_flags uf LEFT JOIN users u ON u.id = uf.user_id WHERE uf.flag = ? ORDER BY uf.id DESC',
+      [flag],
+    );
+    return { flag, items };
+  });
+}
+
+/** `user` = ID numérico ou e-mail. user_flags não tem unique, então checa duplicata antes do INSERT. Sem cache (FlagHelper não cacheia). */
+export async function addUserFlag(input, flag, user) {
+  if (!isValidFlag(flag)) throw fail(400, 'Nome de flag inválido');
+  const ref = String(user ?? '').trim();
+  const byId = ID_RE.test(ref);
+  if (!byId && !ref.includes('@')) throw fail(400, 'Informe o ID numérico ou o e-mail do usuário');
+  return withDb(input, async (conn) => {
+    const [[found]] = await conn.query(`SELECT id, email FROM users WHERE ${byId ? 'id' : 'email'} = ? LIMIT 1`, [ref]);
+    if (!found) throw fail(404, 'Usuário não encontrado');
+    const out = { user_id: found.id, email: found.email, flag };
+    const [[dup]] = await conn.query('SELECT id FROM user_flags WHERE user_id = ? AND flag = ? LIMIT 1', [found.id, flag]);
+    if (dup) return { id: dup.id, ...out, alreadyExisted: true };
+    const [r] = await conn.query('INSERT INTO user_flags (user_id, flag, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [found.id, flag]);
+    return { id: r.insertId, ...out, alreadyExisted: false };
+  });
+}
+
+export async function removeUserFlag(input, id) {
+  if (!ID_RE.test(String(id))) throw fail(400, 'ID inválido');
+  return withDb(input, async (conn) => {
+    const [r] = await conn.query('DELETE FROM user_flags WHERE id = ?', [id]);
+    if (r.affectedRows === 0) throw fail(404, 'Registro de user_flags não encontrado');
+    return { removed: true, id };
+  });
+}

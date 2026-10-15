@@ -8,7 +8,25 @@ const flagList = document.getElementById('flagList');
 const flagWarning = document.getElementById('flagWarning');
 const flagFilter = document.getElementById('flagFilter');
 
-const state = { flags: [], info: null };
+const userFlagsPanel = document.getElementById('userFlagsPanel');
+const userFlagsTitle = document.getElementById('userFlagsTitle');
+const userFlagsList = document.getElementById('userFlagsList');
+const userForm = document.getElementById('userForm');
+const userRef = document.getElementById('userRef');
+
+const state = { flags: [], info: null, selectedFlag: null };
+const currentPath = () => backPathInput.value.trim();
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
+}
 
 function showError(message) {
   flagError.textContent = message;
@@ -53,7 +71,10 @@ function render() {
     input.dataset.flag = f.flag;
     input.checked = f.enabled;
     label.append(input, el('span', 'slider'));
-    row.append(label);
+    const usersBtn = el('button', '', 'Usuários');
+    usersBtn.type = 'button';
+    usersBtn.dataset.users = f.flag;
+    row.append(usersBtn, label);
     flagList.append(row);
   }
 }
@@ -82,6 +103,52 @@ async function toggle(input) {
   }
 }
 
+async function loadUsers(flag) {
+  state.selectedFlag = flag;
+  showError('');
+  try {
+    const data = await api('GET', `/api/flags-panel/user-flags?path=${encodeURIComponent(currentPath())}&flag=${encodeURIComponent(flag)}`);
+    userFlagsPanel.hidden = false;
+    userFlagsTitle.textContent = `Usuários com a flag ${flag}`;
+    userFlagsList.replaceChildren();
+    if (data.items.length === 0) userFlagsList.append(el('div', 'empty', 'Nenhum usuário com essa flag'));
+    for (const item of data.items) {
+      const row = el('div', 'user-row');
+      row.append(el('span', 'mono', `#${item.id} - user_id ${item.user_id} - ${item.email || 'sem e-mail'} - ${item.created_at}`));
+      const rm = el('button', 'danger', 'Remover');
+      rm.type = 'button';
+      rm.dataset.remove = item.id;
+      row.append(rm);
+      userFlagsList.append(row);
+    }
+  } catch (error) {
+    showError(error.message);
+  }
+}
+
+userFlagsList.addEventListener('click', async (e) => {
+  const id = e.target.dataset?.remove;
+  if (!id || !confirm('Remover este usuário da flag?')) return;
+  try {
+    await api('DELETE', '/api/flags-panel/user-flags', { path: currentPath(), id });
+    loadUsers(state.selectedFlag);
+  } catch (error) {
+    showError(error.message);
+  }
+});
+
+userForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const data = await api('POST', '/api/flags-panel/user-flags', { path: currentPath(), flag: state.selectedFlag, user: userRef.value });
+    statusLine.textContent = data.alreadyExisted ? 'Usuário já tinha essa flag' : 'Usuário adicionado';
+    userRef.value = '';
+    loadUsers(state.selectedFlag);
+  } catch (error) {
+    showError(error.message);
+  }
+});
+
 async function load() {
   const path = backPathInput.value.trim();
   showError('');
@@ -99,6 +166,9 @@ async function load() {
   }
 }
 
+flagList.addEventListener('click', (e) => {
+  if (e.target.dataset?.users) loadUsers(e.target.dataset.users);
+});
 flagList.addEventListener('change', (e) => {
   if (e.target.matches('input[data-flag]')) toggle(e.target);
 });

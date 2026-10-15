@@ -134,6 +134,36 @@ test('e2e: toggle global grava, esquece cache e valida entrada', { skip }, async
   }
 });
 
+test('e2e: user_flags listar/adicionar/remover', { skip }, async (t) => {
+  const [[user]] = await withDb(E2E, (c) => c.query('SELECT id, email FROM users WHERE email IS NOT NULL ORDER BY id LIMIT 1'));
+  if (!user) return t.skip('sem usuario no banco de dev');
+  try {
+    let res = await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: user.email });
+    assert.equal(res.status, 200);
+    let body = await res.json();
+    assert.equal(body.alreadyExisted, false);
+    assert.equal(Number(body.user_id), Number(user.id));
+    const rowId = body.id;
+
+    body = await (await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: String(user.id) })).json();
+    assert.equal(body.alreadyExisted, true);
+
+    body = await (await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, flag: SMOKE })}`)).json();
+    assert.ok(body.items.some((i) => i.email === user.email));
+
+    res = await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, id: rowId });
+    assert.equal(res.status, 200);
+    body = await (await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, flag: SMOKE })}`)).json();
+    assert.equal(body.items.length, 0);
+
+    assert.equal((await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: 'nao-existe@example.invalid' })).status, 404);
+    assert.equal((await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: 'abc' })).status, 400);
+    assert.equal((await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, id: 'x' })).status, 400);
+  } finally {
+    await withDb(E2E, (c) => c.query('DELETE FROM user_flags WHERE flag = ?', [SMOKE]));
+  }
+});
+
 after(() => {
   server?.close();
 });

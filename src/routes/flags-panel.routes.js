@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listFlags, toggleFlag } from '../services/flags-panel.service.js';
+import { listFlags, toggleFlag, listUserFlags, addUserFlag, removeUserFlag } from '../services/flags-panel.service.js';
 
 const router = Router();
 
@@ -14,5 +14,8 @@ async function send(res, promise) {
 
 router.get('/flags-panel/flags', (req, res) => send(res, listFlags(req.query.path)));
 router.put('/flags-panel/flag', (req, res) => send(res, toggleFlag(req.body?.path, req.body?.flag, req.body?.enabled)));
+router.get('/flags-panel/user-flags', (req, res) => send(res, listUserFlags(req.query.path, req.query.flag)));
+router.post('/flags-panel/user-flags', (req, res) => send(res, addUserFlag(req.body?.path, req.body?.flag, req.body?.user)));
+router.delete('/flags-panel/user-flags', (req, res) => send(res, removeUserFlag(req.body?.path, req.body?.id)));
 
 export default router;
