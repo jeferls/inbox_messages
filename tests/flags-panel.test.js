@@ -111,6 +111,29 @@ test('e2e: GET /flags lista estado sem vazar senha', { skip }, async () => {
   assert.equal((await call('GET', '/flags.html')).status, 200);
 });
 
+test('e2e: toggle global grava, esquece cache e valida entrada', { skip }, async () => {
+  try {
+    let res = await call('PUT', '/api/flags-panel/flag', { path: E2E, flag: SMOKE, enabled: true });
+    assert.equal(res.status, 200);
+    let body = await res.json();
+    assert.equal(body.enabled, true);
+    assert.equal(typeof body.cacheCleared, 'boolean');
+    let list = await (await call('GET', `/api/flags-panel/flags?${q({ path: E2E })}`)).json();
+    const row = list.flags.find((f) => f.flag === SMOKE);
+    assert.deepEqual([row.inSeeder, row.enabled], [false, true]);
+
+    res = await call('PUT', '/api/flags-panel/flag', { path: E2E, flag: SMOKE, enabled: false });
+    assert.equal((await res.json()).enabled, false);
+    list = await (await call('GET', `/api/flags-panel/flags?${q({ path: E2E })}`)).json();
+    assert.equal(list.flags.some((f) => f.flag === SMOKE), false);
+
+    assert.equal((await call('PUT', '/api/flags-panel/flag', { path: E2E, flag: "x';DROP", enabled: true })).status, 400);
+    assert.equal((await call('PUT', '/api/flags-panel/flag', { path: E2E, flag: SMOKE, enabled: 'sim' })).status, 400);
+  } finally {
+    await call('PUT', '/api/flags-panel/flag', { path: E2E, flag: SMOKE, enabled: false });
+  }
+});
+
 after(() => {
   server?.close();
 });

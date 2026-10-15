@@ -7,6 +7,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import mysql from 'mysql2/promise';
+import { setGlobalFlag } from './global-flags.service.js';
+import { forgetBackCache } from './global-settings.service.js';
 
 // Erros com `status` são de entrada/guard (a rota devolve a mensagem); sem `status` = falha de banco.
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -108,4 +110,12 @@ export function listFlags(input) {
     for (const flag of on) if (!seeded.includes(flag)) flags.push({ flag, enabled: true, inSeeder: false });
     return { backPath: project.backPath, envFile: project.envFile, seederFile: project.seederFile, db: project.db, flags };
   });
+}
+
+/** Liga/desliga a flag global e esquece `feature_flag_<FLAG>` (GlobalFlag::cachedCheck). Cache é não-fatal. */
+export async function toggleFlag(input, flag, enabled) {
+  if (!isValidFlag(flag)) throw fail(400, 'Nome de flag inválido');
+  if (typeof enabled !== 'boolean') throw fail(400, "'enabled' precisa ser booleano");
+  const state = await withDb(input, (conn) => setGlobalFlag(flag, enabled, conn));
+  return { ...state, ...(await forgetBackCache(`feature_flag_${flag}`)) };
 }

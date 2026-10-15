@@ -19,6 +19,8 @@
       .badge { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 600; border: 1px solid transparent; }
       .badge.st-pending { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 
+      .flag-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 8px; }
+
       .flag-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
       .flag-row .mono { flex: 1; }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
@@ -59,8 +61,10 @@
 
           <div class="status-line" id="statusLine"></div>
           <div class="flag-error" id="flagError" hidden></div>
+          <div class="flag-warning" id="flagWarning" hidden></div>
 
           <section class="panel">
+            <div class="panel-header"><input id="flagFilter" type="search" placeholder="Filtrar flags..." /></div>
             <div id="flagList"><div class="empty">Informe o caminho do greenn-back e clique em Carregar</div></div>
           </section>
         </div>

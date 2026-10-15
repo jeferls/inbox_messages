@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listFlags } from '../services/flags-panel.service.js';
+import { listFlags, toggleFlag } from '../services/flags-panel.service.js';
 
 const router = Router();
 
@@ -13,5 +13,6 @@ async function send(res, promise) {
 }
 
 router.get('/flags-panel/flags', (req, res) => send(res, listFlags(req.query.path)));
+router.put('/flags-panel/flag', (req, res) => send(res, toggleFlag(req.body?.path, req.body?.flag, req.body?.enabled)));
 
 export default router;

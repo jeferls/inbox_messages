@@ -22,6 +22,8 @@ services:
       - inbox_data:/data
       # Permite subir/parar os containers do ambiente local pela página de QR Code
       - /var/run/docker.sock:/var/run/docker.sock
+      # greenn-back somente leitura para a aba Flags: .env.dev e GlobalFlagSeeder
+      - ${GREENN_BACK_PATH:-../greenn-back}:/greenn-back:ro
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:80/api/health"]
       interval: 10s

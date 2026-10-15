@@ -11,8 +11,8 @@ import { getGreennPool } from './greenn-db.js';
  * Estado atual da flag. A flag está "ligada" quando existe uma linha para ela —
  * é exatamente o que `FlagHelper::exists()` avalia no backend.
  */
-export async function getGlobalFlag(flag) {
-  const [rows] = await getGreennPool().query(
+export async function getGlobalFlag(flag, db = getGreennPool()) {
+  const [rows] = await db.query(
     'SELECT id, flag, created_at, updated_at FROM global_flags WHERE flag = ? ORDER BY id ASC',
     [flag],
   );
@@ -31,26 +31,19 @@ export async function getGlobalFlag(flag) {
 
 /**
  * Liga (insere a linha) ou desliga (remove todas as linhas da flag).
+ * `db` é um pool (padrão) ou uma conexão avulsa (painel de flags, que usa o .env digitado).
  * Idempotente: ligar uma flag já ligada não cria duplicata.
  */
-export async function setGlobalFlag(flag, enabled) {
-  const connection = await getGreennPool().getConnection();
+export async function setGlobalFlag(flag, enabled, db = getGreennPool()) {
+  if (enabled) {
+    const [existing] = await db.query('SELECT id FROM global_flags WHERE flag = ? LIMIT 1', [flag]);
 
-  try {
-    if (enabled) {
-      const [existing] = await connection.query('SELECT id FROM global_flags WHERE flag = ? LIMIT 1', [flag]);
-
-      if (existing.length === 0) {
-        await connection.query('INSERT INTO global_flags (flag, created_at, updated_at) VALUES (?, NOW(), NOW())', [
-          flag,
-        ]);
-      }
-    } else {
-      await connection.query('DELETE FROM global_flags WHERE flag = ?', [flag]);
+    if (existing.length === 0) {
+      await db.query('INSERT INTO global_flags (flag, created_at, updated_at) VALUES (?, NOW(), NOW())', [flag]);
     }
-  } finally {
-    connection.release();
+  } else {
+    await db.query('DELETE FROM global_flags WHERE flag = ?', [flag]);
   }
 
-  return getGlobalFlag(flag);
+  return getGlobalFlag(flag, db);
 }
