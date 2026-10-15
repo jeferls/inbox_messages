@@ -157,10 +157,18 @@ export async function addUserFlag(input, flag, user) {
   return withDb(input, async (conn) => {
     const found = await findUser(conn, user);
     const out = { user_id: found.id, email: found.email, flag };
-    const [[dup]] = await conn.query('SELECT id FROM user_flags WHERE user_id = ? AND flag = ? LIMIT 1', [found.id, flag]);
-    if (dup) return { id: dup.id, ...out, alreadyExisted: true };
-    const [r] = await conn.query('INSERT INTO user_flags (user_id, flag, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [found.id, flag]);
-    return { id: r.insertId, ...out, alreadyExisted: false };
+    // Sem unique em user_flags: o lock nomeado serializa check+insert entre requisições concorrentes.
+    const lock = `flags-panel:${found.id}:${flag}`;
+    const [[{ ok }]] = await conn.query('SELECT GET_LOCK(?, 5) AS ok', [lock]);
+    if (ok !== 1) throw fail(409, 'Outra gravação desse usuário/flag está em andamento, tente de novo');
+    try {
+      const [[dup]] = await conn.query('SELECT id FROM user_flags WHERE user_id = ? AND flag = ? LIMIT 1', [found.id, flag]);
+      if (dup) return { id: dup.id, ...out, alreadyExisted: true };
+      const [r] = await conn.query('INSERT INTO user_flags (user_id, flag, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [found.id, flag]);
+      return { id: r.insertId, ...out, alreadyExisted: false };
+    } finally {
+      await conn.query('SELECT RELEASE_LOCK(?)', [lock]);
+    }
   });
 }
 

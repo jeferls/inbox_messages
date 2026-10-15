@@ -10,6 +10,7 @@ import {
   locateProject,
   resolveDbConfig,
   withDb,
+  addUserFlag,
 } from '../src/services/flags-panel.service.js';
 
 test('parseSeederFlags extrai nomes, ignora comentarios e deduplica', () => {
@@ -148,10 +149,22 @@ test('e2e: user_flags listar/adicionar/remover', { skip }, async (t) => {
     body = await (await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: String(user.id) })).json();
     assert.equal(body.alreadyExisted, true);
 
+    // Clique duplo: requisições simultâneas não podem duplicar a linha.
+    await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, id: rowId });
+    // 30 chamadas diretas ao service: sem o GET_LOCK isso gerava 8-26 linhas.
+    const burst = await Promise.all(Array.from({ length: 30 }, () => addUserFlag(E2E, SMOKE, String(user.id))));
+    assert.equal(burst.filter((b) => b.alreadyExisted === false).length, 1);
+    const [[{ n }]] = await withDb(E2E, (c) => c.query('SELECT COUNT(*) AS n FROM user_flags WHERE user_id = ? AND flag = ?', [user.id, SMOKE]));
+    assert.equal(Number(n), 1);
+    const burstRowId = burst.find((b) => b.alreadyExisted === false).id;
+    await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, id: burstRowId });
+    body = await (await call('POST', '/api/flags-panel/user-flags', { path: E2E, flag: SMOKE, user: String(user.id) })).json();
+    const rowIdAfterBurst = body.id;
+
     body = await (await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, flag: SMOKE })}`)).json();
     assert.ok(body.items.some((i) => i.email === user.email));
 
-    res = await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, id: rowId });
+    res = await call('DELETE', '/api/flags-panel/user-flags', { path: E2E, id: rowIdAfterBurst });
     assert.equal(res.status, 200);
     body = await (await call('GET', `/api/flags-panel/user-flags?${q({ path: E2E, flag: SMOKE })}`)).json();
     assert.equal(body.items.length, 0);
