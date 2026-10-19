@@ -1,4 +1,4 @@
-.PHONY: up down logs logs-claim rebuild clean-cache mobile mobile-all help
+.PHONY: up down logs logs-claim rebuild clean-cache mobile mobile-all idwall-mock-on idwall-mock-off idwall-mock-status help
 
 SERVICE_NAME := svc-inbox_messages
 CLAIM_SERVICE_NAME := svc-claim-page
@@ -21,6 +21,9 @@ help:
 	@echo "  make clean-cache   # Limpa cache de build do Docker"
 	@echo "  make mobile        # Sobe com o IP da LAN preenchido (pagina de QR Code)"
 	@echo "  make mobile-all    # mobile + reconfigura adm e new-checkout para o IP da LAN"
+	@echo "  make idwall-mock-on     # aponta o greenn-back local para o mock da IdWall (patch local, nao commitar)"
+	@echo "  make idwall-mock-off    # desfaz o patch da IdWall no greenn-back"
+	@echo "  make idwall-mock-status # mostra se o patch da IdWall esta aplicado"
 
 up:
 	@echo ">> Garantindo rede $(NETWORK)"
@@ -75,3 +78,12 @@ rebuild:
 clean-cache:
 	@echo ">> Limpando cache de build do Docker"
 	@docker builder prune -f
+
+idwall-mock-on:
+	@scripts/idwall-mock-patch.sh on
+
+idwall-mock-off:
+	@scripts/idwall-mock-patch.sh off
+
+idwall-mock-status:
+	@scripts/idwall-mock-patch.sh status

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+      .card + .card { margin-top: 16px; }
+      .card h2 { font-size: 15px; margin: 0 0 10px; }
+      .card p { font-size: 13.5px; line-height: 1.55; color: #374151; margin: 0 0 10px; }
+      .card code { background: #f3f4f6; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; }
+
+      .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; }
+      .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #374151; }
+      .field label { font-weight: 600; }
+      .field input, .field select { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13.5px; font-family: inherit; background: #fff; }
+      .field .hint { font-size: 12px; color: #6b7280; }
+      .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+      .modes { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+      .modes label { display: flex; gap: 8px; align-items: baseline; font-weight: 400; }
+
+      .withdraw-box { margin-top: 12px; font-size: 13px; }
+      .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
+      .kv dt { color: #6b7280; }
+      .kv dd { margin: 0; font-family: ui-monospace, 'Fira Mono', Consolas, monospace; }
+
+      .result { margin-top: 12px; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+      .result.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+      .result.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+      .result h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; margin: 12px 0 4px; color: #374151; }
+      .result pre { margin: 0; background: #0b1020; color: #cbd5e1; border-radius: 6px; padding: 10px; overflow: auto; max-height: 30vh; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+      .transition { font-size: 14px; font-weight: 700; }
+      .changed { color: #b45309; }
+
+      .history-table { width: 100%; border-collapse: collapse; font-size: 12.5px; background: #fff; }
+      .history-table th, .history-table td { text-align: left; padding: 7px 9px; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+      .history-table th { font-size: 11.5px; text-transform: uppercase; color: #6b7280; background: #f9fafb; }
+      .history-table tr { cursor: pointer; }
+      .history-table tbody tr:hover { background: #f9fafb; }
+      .table-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/email-templates.html">E-mails</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Gateway Mocks</span>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link" href="/idwall.html">IdWall</a>
+          <a class="sidebar-link active" href="/transfeera.html">Transfeera</a>
+          <a class="sidebar-link" href="/recorrencia.html">Recorrência</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
+          <a class="sidebar-link" href="/whatsapp.html">WhatsApp</a>
+          <a class="sidebar-link" href="/whs-forward.html">Webhook Forward</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1>Transfeera</h1>
+          </div>
+
+          <section class="card">
+            <h2>Webhook de transferência (saques)</h2>
+            <p>
+              Dispara <code>POST /api/withdraw/group/webhook</code> no greenn-back com o evento <code>Transfer</code>
+              e o header <code>Transfeera-Signature: t=&lt;timestamp&gt;,v1=&lt;HMAC-SHA256&gt;</code>, assinado sobre
+              <code>${t}.${corpo}</code> com o segredo <code>TRANSFEERA_WEBHOOK_TRANSFER_SECRET</code>.
+              FINALIZADO/TRANSFERIDO levam o saque para <code>ACCEPTED</code>; FALHA/DEVOLVIDO para <code>REQUESTED</code>.
+            </p>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="withdrawId">Withdraw ID</label>
+                <input id="withdrawId" type="number" min="1" placeholder="ex.: 185" />
+              </div>
+              <div class="field">
+                <label for="statusSelect">Status</label>
+                <select id="statusSelect"></select>
+                <input id="statusCustom" type="text" maxlength="64" placeholder="Status livre" hidden />
+              </div>
+              <div class="field">
+                <label for="accountId">account_id</label>
+                <input id="accountId" type="text" />
+              </div>
+              <div class="field">
+                <label for="secretInput">Segredo (opcional)</label>
+                <input id="secretInput" type="password" autocomplete="off" placeholder="Usa a env" />
+                <span id="secretHint" class="hint"></span>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top: 14px;">
+              <label>Modo da assinatura</label>
+              <div class="modes">
+                <label><input type="radio" name="mode" value="valid" checked /> (a) Válida — HMAC correto, timestamp atual</label>
+                <label><input type="radio" name="mode" value="invalid" /> (b) Inválida — <code>v1</code> aleatório</label>
+                <label><input type="radio" name="mode" value="missing" /> (c) Sem header <code>Transfeera-Signature</code></label>
+                <label><input type="radio" name="mode" value="stale" /> (d) Timestamp antigo — <code>t</code> = agora − 1h, assinatura válida para esse <code>t</code></label>
+                <label><input type="radio" name="mode" value="malformed" /> (e) Header malformado</label>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="lookupBtn" type="button">Buscar saque</button>
+              <button id="sendBtn" type="button">Disparar</button>
+            </div>
+
+            <div id="withdrawBox" class="withdraw-box" hidden></div>
+            <div id="result" class="result" hidden></div>
+          </section>
+
+          <section class="card">
+            <h2>Histórico (esta página)</h2>
+            <div class="table-wrap">
+              <table class="history-table">
+                <thead>
+                  <tr><th>Hora</th><th>Saque</th><th>Status enviado</th><th>Modo</th><th>HTTP</th><th>Antes → Depois</th><th>Duração</th></tr>
+                </thead>
+                <tbody id="historyBody">
+                  <tr><td colspan="7">Nenhum disparo ainda.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script src="/transfeera.js?v=1"></script>
+    <script src="/tab-badge.js?v=1"></script>
+  </body>
+</html>

@@ -16,6 +16,10 @@ services:
       - LAN_HOST=${LAN_HOST:-}
       # Mock da WhatsApp Cloud API (aba WhatsApp): backend que recebe os webhooks (mensagens do cliente e status)
       - WA_MOCK_WEBHOOK_URL=${WA_MOCK_WEBHOOK_URL:-http://messages-nginx/api/whatsapp/callback}
+      # Segredo do webhook de transferência da Transfeera (aba Transfeera) = TRANSFEERA_WEBHOOK_TRANSFER_SECRET do greenn-back
+      - TRANSFEERA_WEBHOOK_SECRET=${TRANSFEERA_WEBHOOK_SECRET:-}
+      # Aba IdWall: igual ao IDWALL_WEBHOOK_TOKEN do greenn-back (vazio enquanto ele não estiver definido)
+      - IDWALL_MOCK_WEBHOOK_TOKEN=${IDWALL_MOCK_WEBHOOK_TOKEN:-}
     ports:
       - "8115:80"
     volumes:
