@@ -11,17 +11,8 @@ export async function getGlobalSetting(key) {
   return { key, exists: rows.length > 0, value: rows[0]?.value ?? null };
 }
 
-export async function setGlobalSetting(key, value) {
-  const conn = await getGreennPool().getConnection();
-  try {
-    const [result] = await conn.query('UPDATE global_settings SET value = ?, updated_at = NOW() WHERE `key` = ?', [value, key]);
-    if (result.affectedRows === 0) {
-      await conn.query('INSERT INTO global_settings (`key`, value, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [key, value]);
-    }
-  } finally {
-    conn.release();
-  }
-
+/** Esvazia `key` no cache do container do greenn-back. Falha não é fatal: volta em `cacheError`. */
+export async function forgetBackCache(key) {
   let cacheCleared = false;
   let cacheError = null;
   if (isDockerAvailable()) {
@@ -35,6 +26,19 @@ export async function setGlobalSetting(key, value) {
   } else {
     cacheError = 'socket do Docker indisponível';
   }
+  return { cacheCleared, cacheError };
+}
 
-  return { ...(await getGlobalSetting(key)), cacheCleared, cacheError };
+export async function setGlobalSetting(key, value) {
+  const conn = await getGreennPool().getConnection();
+  try {
+    const [result] = await conn.query('UPDATE global_settings SET value = ?, updated_at = NOW() WHERE `key` = ?', [value, key]);
+    if (result.affectedRows === 0) {
+      await conn.query('INSERT INTO global_settings (`key`, value, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [key, value]);
+    }
+  } finally {
+    conn.release();
+  }
+
+  return { ...(await getGlobalSetting(key)), ...(await forgetBackCache(key)) };
 }

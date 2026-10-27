@@ -32,6 +32,7 @@ import embedCheckRoutes from './routes/embed-check.routes.js';
 import waMockRoutes from './routes/wa-mock.routes.js';
 import emailTemplatesRoutes from './routes/email-templates.routes.js';
 import whsForwardRoutes from './routes/whs-forward.routes.js';
+import flagsPanelRoutes from './routes/flags-panel.routes.js';
 import { autoStart as whsAutoStart } from './services/whs-forward.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -112,6 +113,7 @@ app.use('/api', dockerRoutes);
 app.use('/api', embedCheckRoutes);
 app.use('/api', emailTemplatesRoutes);
 app.use('/api', whsForwardRoutes);
+app.use('/api', flagsPanelRoutes);
 app.use('/api', idwallRegressionRoutes);
 app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);
