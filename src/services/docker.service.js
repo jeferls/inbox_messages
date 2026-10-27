@@ -72,6 +72,25 @@ export async function execInContainer(container, cmd, { timeout = 120000 } = {})
   return { exitCode, ...demultiplex(started.buffer) };
 }
 
+// Starts a long-running command inside a container without waiting for it (e.g. queue workers).
+export async function startDetachedInContainer(container, cmd) {
+  const info = await inspect(container);
+  if (!info) throw new Error(`container ${container} não existe`);
+  if (info.State?.Running !== true) throw new Error(`container ${container} não está rodando`);
+
+  const created = await request('POST', `/containers/${encodeURIComponent(container)}/exec`, {
+    AttachStdout: false,
+    AttachStderr: false,
+    Cmd: cmd,
+  });
+  if (created.status !== 201) throw new Error(`Docker respondeu ${created.status}: ${created.body}`);
+
+  const execId = JSON.parse(created.body).Id;
+  const started = await request('POST', `/exec/${execId}/start`, { Detach: true, Tty: false });
+  if (started.status !== 200) throw new Error(`Docker respondeu ${started.status}: ${started.body}`);
+  return execId;
+}
+
 export function isDockerAvailable() {
   return fs.existsSync(SOCKET_PATH);
 }

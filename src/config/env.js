@@ -58,6 +58,10 @@ export const GREENN_BACK_CONTAINER = process.env.GREENN_BACK_CONTAINER?.trim() |
 export const GREENN_BACK_URL =
   (process.env.GREENN_BACK_URL && process.env.GREENN_BACK_URL.trim()) || 'http://greenn-back-nginx';
 
+// Segredo do webhook de transferência da Transfeera (aba Transfeera). Precisa ser o mesmo
+// TRANSFEERA_WEBHOOK_TRANSFER_SECRET do .env.dev do greenn-back; a tela permite sobrescrever.
+export const TRANSFEERA_WEBHOOK_SECRET = process.env.TRANSFEERA_WEBHOOK_SECRET?.trim() || '';
+
 // Logs
 export const LOG_DIR = (process.env.LOG_DIR && process.env.LOG_DIR.trim()) || path.join(__dirname, '..', '..', 'logs');
 export const LOG_FILE = (process.env.LOG_FILE && process.env.LOG_FILE.trim()) || path.join(LOG_DIR, 'app.log');
@@ -107,4 +111,13 @@ export const TAG_CONCILIATION = {
     .map((s) => s.trim())
     .filter(Boolean),
   defaultDocumentNumber: process.env.TAG_CONCILIATION_DOCUMENT_NUMBER?.trim() || '12345678000199',
+};
+
+// IdWall mock (IdWall tab). greenn-back points its IdWall base URLs here through the local patch
+// in scripts/idwall-mock-patch.sh; webhooks go back to GREENN_BACK_URL.
+export const IDWALL_MOCK = {
+  stateFile: path.join(path.dirname(DB_PATH), 'idwall-mock-state.json'),
+  // Must match IDWALL_WEBHOOK_TOKEN of greenn-back; empty works while that variable is unset.
+  webhookToken: process.env.IDWALL_MOCK_WEBHOOK_TOKEN?.trim() || '',
+  webhookTimeoutMs: Number(process.env.IDWALL_MOCK_WEBHOOK_TIMEOUT_MS || 20000),
 };

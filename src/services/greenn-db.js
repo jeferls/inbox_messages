@@ -18,3 +18,12 @@ export function getGreennPool() {
 
   return pool;
 }
+
+// Tabelas opcionais (ex.: tag_ur_alerts) podem não existir em bancos locais desatualizados.
+export async function tableExists(pool, table) {
+  const [[row]] = await pool.query(
+    'SELECT COUNT(*) AS total FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+    [table],
+  );
+  return row.total > 0;
+}

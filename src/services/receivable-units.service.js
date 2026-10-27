@@ -1,4 +1,4 @@
-import { getGreennPool } from './greenn-db.js';
+import { getGreennPool, tableExists } from './greenn-db.js';
 
 // mysql2 devolve DATE/TIMESTAMP como Date; a tela só precisa do texto como está no banco.
 function normalizeRow(row) {
@@ -30,6 +30,9 @@ export async function listReceivableUnits({ limit = 20, page = 0, search = '' } 
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM receivable_unit ru ${whereSql}`, params);
+  const alertsCountSql = (await tableExists(pool, 'tag_ur_alerts'))
+    ? '(SELECT COUNT(*) FROM tag_ur_alerts a WHERE a.ur_id = ru.id)'
+    : '0';
 
   const [rows] = await pool.query(
     `SELECT ru.id, ru.\`key\`, ru.reference, ru.user_id, ru.dueDate, ru.amount, ru.pre_paid_amount,
@@ -40,7 +43,7 @@ export async function listReceivableUnits({ limit = 20, page = 0, search = '' } 
             (SELECT COALESCE(SUM(so.settled_amount), 0) FROM settlement_obligations so WHERE so.receivable_unit_id = ru.id) AS settled_amount,
             (SELECT COUNT(*) FROM settlements s JOIN settlement_obligations so ON so.id = s.settlement_obligation_id WHERE so.receivable_unit_id = ru.id) AS settlements_count,
             (SELECT GROUP_CONCAT(DISTINCT ssu.sale_id ORDER BY ssu.sale_id) FROM sale_statement_units ssu WHERE ssu.receivable_unit_id = ru.id) AS sale_ids,
-            (SELECT COUNT(*) FROM tag_ur_alerts a WHERE a.ur_id = ru.id) AS alerts_count
+            ${alertsCountSql} AS alerts_count
        FROM receivable_unit ru
        LEFT JOIN payment_arrangements pa ON pa.id = ru.payment_arrangement_id
        LEFT JOIN users u ON u.id = ru.user_id
@@ -84,7 +87,9 @@ export async function getReceivableUnitDetail(id) {
       ORDER BY ssu.id`,
     [id],
   );
-  const [alerts] = await pool.query('SELECT * FROM tag_ur_alerts WHERE ur_id = ? ORDER BY id', [id]);
+  const [alerts] = (await tableExists(pool, 'tag_ur_alerts'))
+    ? await pool.query('SELECT * FROM tag_ur_alerts WHERE ur_id = ? ORDER BY id', [id])
+    : [[]];
   const [reconciliations] = await pool.query('SELECT * FROM reconciliation_receivables_units WHERE receivable_unit_id = ? ORDER BY id', [id]);
 
   return {
