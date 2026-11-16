@@ -22,6 +22,7 @@ import subscriptionsRoutes from './routes/subscriptions.routes.js';
 import postbackGatewayRoutes from './routes/postback-gateway.routes.js';
 import worldpayMockRoutes from './routes/worldpay-mock.routes.js';
 import idwallMockRoutes from './routes/idwall-mock.routes.js';
+import iuguMockRoutes from './routes/iugu-mock.routes.js';
 import idwallRegressionRoutes from './routes/idwall-regression.routes.js';
 import paymentTesterRoutes from './routes/payment-tester.routes.js';
 import kondutoRoutes from './routes/konduto.routes.js';
@@ -54,7 +55,8 @@ app.use((req, res, next) => {
 });
 
 // Sem limite prático por padrão (BODY_LIMIT = Infinity). ATENÇÃO: pode consumir muita memória.
-app.use(express.json({ limit: BODY_LIMIT }));
+// The raw text stays on req.rawBody: the Iugu sec-proxy mock tells {} from [] and validates the body itself.
+app.use(express.json({ limit: BODY_LIMIT, verify: (req, _res, buf) => { req.rawBody = buf.toString('utf8'); } }));
 app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT, parameterLimit: Number.MAX_SAFE_INTEGER }));
 
 // Após parsing, loga tamanho estimado (se possível) e tempo decorrido até aqui
@@ -116,6 +118,7 @@ app.use('/api', idwallRegressionRoutes);
 app.use('/equals-api', equalsApiRoutes);
 app.use('/', worldpayMockRoutes);
 app.use('/', idwallMockRoutes);
+app.use('/', iuguMockRoutes);
 app.use('/', receivableDirectRoutes);
 app.use('/', holidayRoutes);
 app.use('/', tagAuthRoutes);

@@ -48,6 +48,7 @@
           <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
           <a class="sidebar-link" href="/konduto.html">Konduto</a>
           <a class="sidebar-link" href="/idwall.html">IdWall</a>
+          <a class="sidebar-link" href="/gateway-mocks-iugu.html">Iugu</a>
           <a class="sidebar-link" href="/transfeera.html">Transfeera</a>
           <a class="sidebar-link" href="/recorrencia.html">Recorrência</a>
           <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
@@ -87,6 +88,13 @@
                 <td class="col-desc">
                   XML <code>paymentService</code> (WPG) — 26 cenários de charge
                   <div class="active-note" id="worldpay-active"></div>
+                </td>
+                <td class="col-state"><span class="state-ready">disponível</span></td>
+              </tr>
+              <tr>
+                <td class="col-name"><a href="/gateway-mocks-iugu.html">Iugu</a></td>
+                <td class="col-desc">
+                  API direta <code>/iugu/v1</code> + protocolo do sec-proxy <code>/iugu-proxy</code> — subcontas, KYC, faturas, cobrança, estorno, splits e webhooks. Configuração: <code>make iugu-mock-on</code>
                 </td>
                 <td class="col-state"><span class="state-ready">disponível</span></td>
               </tr>

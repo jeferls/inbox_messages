@@ -89,6 +89,40 @@ export async function dbInit() {
 
   await run(`CREATE INDEX IF NOT EXISTS idx_gateway_mock_tx_gateway ON gateway_mock_transactions (gateway, id DESC)`);
 
+  // Iugu mock: every object (accounts, invoices, customers, tokens...) as JSON keyed by kind + id.
+  await run(`
+    CREATE TABLE IF NOT EXISTS iugu_mock_objects (
+      kind TEXT NOT NULL,
+      id TEXT NOT NULL,
+      account_id TEXT,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      PRIMARY KEY (kind, id)
+    )
+  `);
+  await run(`CREATE INDEX IF NOT EXISTS idx_iugu_mock_objects_account ON iugu_mock_objects (kind, account_id)`);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS iugu_mock_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      channel TEXT NOT NULL,
+      method TEXT NOT NULL,
+      path TEXT NOT NULL,
+      route TEXT,
+      auth TEXT,
+      account_id TEXT,
+      invoice_id TEXT,
+      status INTEGER NOT NULL,
+      request_body TEXT,
+      response_body TEXT,
+      warnings TEXT,
+      duration_ms INTEGER,
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    )
+  `);
+  await run(`CREATE INDEX IF NOT EXISTS idx_iugu_mock_requests_invoice ON iugu_mock_requests (invoice_id)`);
+
   await seedEqualsDefaults();
 }
 
@@ -706,5 +740,136 @@ export async function clearGatewayMockTransactions(gateway) {
   const result = gateway
     ? await run(`DELETE FROM gateway_mock_transactions WHERE gateway = ?`, [gateway])
     : await run(`DELETE FROM gateway_mock_transactions`);
+  return result?.changes ?? 0;
+}
+
+// ─── Iugu mock ────────────────────────────────────────────────────────────────
+
+function parseIuguRow(row) {
+  if (!row) return null;
+  return { ...JSON.parse(row.data), _created_at: row.created_at, _updated_at: row.updated_at };
+}
+
+function stripIuguMeta(data) {
+  const { _created_at, _updated_at, ...rest } = data;
+  return rest;
+}
+
+export async function iuguMockGet(kind, id) {
+  return parseIuguRow(await get(`SELECT * FROM iugu_mock_objects WHERE kind = ? AND id = ?`, [kind, id]));
+}
+
+export async function iuguMockPut(kind, id, accountId, data) {
+  await run(
+    `INSERT INTO iugu_mock_objects (kind, id, account_id, data)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(kind, id) DO UPDATE SET
+       account_id = excluded.account_id,
+       data = excluded.data,
+       updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`,
+    [kind, id, accountId ?? null, JSON.stringify(stripIuguMeta(data))]
+  );
+  return iuguMockGet(kind, id);
+}
+
+export async function iuguMockList(kind, { accountId, limit = 500, offset = 0 } = {}) {
+  const where = ['kind = ?'];
+  const params = [kind];
+  if (accountId) {
+    where.push('account_id = ?');
+    params.push(accountId);
+  }
+  const rows = await all(
+    `SELECT * FROM iugu_mock_objects WHERE ${where.join(' AND ')}
+     ORDER BY created_at DESC, rowid DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+  return rows.map(parseIuguRow);
+}
+
+export async function iuguMockCount(kind, accountId) {
+  const row = accountId
+    ? await get(`SELECT COUNT(*) AS count FROM iugu_mock_objects WHERE kind = ? AND account_id = ?`, [kind, accountId])
+    : await get(`SELECT COUNT(*) AS count FROM iugu_mock_objects WHERE kind = ?`, [kind]);
+  return row?.count ?? 0;
+}
+
+/** Clears every Iugu object except the settings, and the request log. */
+export async function iuguMockClear() {
+  const objects = await run(`DELETE FROM iugu_mock_objects WHERE kind <> 'settings'`);
+  const requests = await run(`DELETE FROM iugu_mock_requests`);
+  return { objects: objects?.changes ?? 0, requests: requests?.changes ?? 0 };
+}
+
+export async function insertIuguMockRequest({
+  channel,
+  method,
+  path,
+  route = null,
+  auth = null,
+  accountId = null,
+  invoiceId = null,
+  status,
+  requestBody = null,
+  responseBody = null,
+  warnings = null,
+  durationMs = null,
+}) {
+  await run(
+    `INSERT INTO iugu_mock_requests
+       (channel, method, path, route, auth, account_id, invoice_id, status, request_body, response_body, warnings, duration_ms)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      channel,
+      method,
+      path,
+      route,
+      auth,
+      accountId,
+      invoiceId,
+      status,
+      requestBody == null ? null : JSON.stringify(requestBody),
+      responseBody == null ? null : JSON.stringify(responseBody),
+      warnings && warnings.length ? JSON.stringify(warnings) : null,
+      durationMs,
+    ]
+  );
+}
+
+export async function listIuguMockRequests({ limit = 50, offset = 0, accountId, invoiceId, channel } = {}) {
+  const where = [];
+  const params = [];
+  if (accountId) {
+    where.push('account_id = ?');
+    params.push(accountId);
+  }
+  if (invoiceId) {
+    where.push('invoice_id = ?');
+    params.push(invoiceId);
+  }
+  if (channel) {
+    where.push('channel = ?');
+    params.push(channel);
+  }
+  const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const rows = await all(
+    `SELECT * FROM iugu_mock_requests ${clause} ORDER BY id DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+  const totalRow = await get(`SELECT COUNT(*) AS count FROM iugu_mock_requests ${clause}`, params);
+  const parse = (value) => (value == null ? null : JSON.parse(value));
+  return {
+    items: rows.map((row) => ({
+      ...row,
+      request_body: parse(row.request_body),
+      response_body: parse(row.response_body),
+      warnings: parse(row.warnings) ?? [],
+    })),
+    total: totalRow?.count ?? 0,
+  };
+}
+
+export async function clearIuguMockRequests() {
+  const result = await run(`DELETE FROM iugu_mock_requests`);
   return result?.changes ?? 0;
 }

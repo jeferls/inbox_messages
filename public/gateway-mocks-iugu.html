@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greenn-Tools</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+      .tab { padding: 8px 16px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
+      .tab:hover { background: #f3f4f6; }
+      .tab.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
+      .config-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 13px; color: #475569; line-height: 1.7; }
+      .config-info code { background: #e2e8f0; border-radius: 4px; padding: 1px 5px; font-size: 12px; word-break: break-all; }
+      .panel-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+      .panel-actions input, .panel-actions select { font-size: 13px; padding: 5px 8px; }
+      .count-badge { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+      .crumb { color: #6b7280; text-decoration: none; font-weight: 400; }
+      .crumb:hover { color: #1d4ed8; text-decoration: underline; }
+      .table-wrap { overflow-x: auto; }
+      table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+      table.data th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+      table.data td { padding: 7px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+      table.data tr.clickable { cursor: pointer; }
+      table.data tr.clickable:hover { background: #f8fafc; }
+      .mono { font-family: 'Fira Mono', 'Cascadia Code', monospace; font-size: 12px; }
+      .muted { color: #6b7280; font-size: 12px; }
+      .pill { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+      .pill-green { background: #dcfce7; color: #166534; }
+      .pill-red { background: #fee2e2; color: #991b1b; }
+      .pill-amber { background: #fef3c7; color: #92400e; }
+      .pill-blue { background: #dbeafe; color: #1e40af; }
+      .pill-gray { background: #f1f5f9; color: #475569; }
+      .settings-grid { display: grid; grid-template-columns: minmax(180px, 260px) 1fr; gap: 10px 16px; align-items: center; font-size: 13px; max-width: 900px; }
+      .settings-grid .hint { grid-column: 2; color: #6b7280; font-size: 12px; margin-top: -6px; }
+      .settings-grid input[type=text], .settings-grid input[type=number], .settings-grid select { width: 100%; max-width: 420px; padding: 5px 8px; font-size: 13px; box-sizing: border-box; }
+      .warn-list { margin: 6px 0 0; padding-left: 18px; color: #92400e; font-size: 12px; }
+
+      .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+      .modal-overlay.open { display: flex; }
+      .modal-box { background: #fff; border-radius: 10px; width: 94vw; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+      .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid #e5e7eb; gap: 12px; }
+      .modal-header h2 { margin: 0; font-size: 15px; color: #111827; word-break: break-all; }
+      .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #6b7280; padding: 2px 6px; border-radius: 4px; }
+      .modal-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px; border-bottom: 1px solid #e5e7eb; }
+      .modal-actions button { font-size: 12px; padding: 4px 10px; }
+      .modal-tabs { display: flex; gap: 4px; padding: 10px 20px 0; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+      .modal-tab { padding: 6px 12px; border: 1px solid #d1d5db; border-bottom: none; background: #fff; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 13px; }
+      .modal-tab.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; }
+      .modal-body { overflow: auto; padding: 14px 20px; flex: 1; font-size: 13px; }
+      .modal-body pre { margin: 0; font-family: 'Fira Mono', monospace; font-size: 12px; line-height: 1.55; background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 12px; white-space: pre-wrap; word-break: break-word; }
+      .kv { display: grid; grid-template-columns: minmax(160px, 240px) 1fr; gap: 4px 12px; font-size: 13px; }
+      .kv dt { color: #6b7280; }
+      .kv dd { margin: 0; word-break: break-all; }
+      .req-item { border: 1px solid #e5e7eb; border-radius: 8px; margin: 8px 0; padding: 8px 10px; }
+      .req-item summary { cursor: pointer; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .req-item pre { margin-top: 8px; }
+      .copy { font-size: 11px; padding: 1px 6px; margin-left: 6px; }
+      @media (max-width: 640px) {
+        .settings-grid, .kv { grid-template-columns: 1fr; }
+        .settings-grid .hint { grid-column: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="sidebar">
+        <div class="sidebar-brand">Greenn Tools</div>
+        <div class="sidebar-nav">
+          <a class="sidebar-link" href="/">Inbox</a>
+          <a class="sidebar-link" href="/email-templates.html">E-mails</a>
+          <a class="sidebar-link" href="/lotes.html">Lotes SLC</a>
+          <a class="sidebar-link" href="/receivables.html">TAG URs</a>
+          <a class="sidebar-link" href="/equals-mocks.html">Equals Mocks</a>
+          <a class="sidebar-link" href="/gateway-mocks.html">Gateway Mocks</a>
+          <a class="sidebar-link" href="/claims.html">Reclamações</a>
+          <a class="sidebar-link" href="/postback-gateway.html">Postback Gateway</a>
+          <span class="sidebar-link disabled" title="Aba desabilitada">Testes de Pagamento</span>
+          <a class="sidebar-link" href="/konduto.html">Konduto</a>
+          <a class="sidebar-link" href="/idwall.html">IdWall</a>
+          <a class="sidebar-link active" href="/gateway-mocks-iugu.html">Iugu</a>
+          <a class="sidebar-link" href="/transfeera.html">Transfeera</a>
+          <a class="sidebar-link" href="/recorrencia.html">Recorrência</a>
+          <a class="sidebar-link" href="/qrcode.html">Greenn-Mobile</a>
+          <a class="sidebar-link" href="/whatsapp.html">WhatsApp</a>
+          <a class="sidebar-link" href="/whs-forward.html">Webhook Forward</a>
+        </div>
+      </nav>
+      <div class="app-content">
+        <div class="page-shell">
+          <div class="page-header">
+            <h1><a href="/gateway-mocks.html" class="crumb">Gateway Mocks</a> / Iugu</h1>
+          </div>
+
+          <div class="config-info" id="connection-info">
+            Rode <code>make iugu-mock-on</code> no inbox_messages: ele aponta o greenn-back e a gateway para este mock.
+            API direta: <code id="conn-direct">—</code> · sec-proxy: <code id="conn-proxy">—</code> (x-greenn-token <code id="conn-token">—</code>).
+            Webhooks de fatura vão para <code id="conn-webhook">—</code>.
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="accounts">Subcontas <span class="count-badge" id="count-accounts">0</span></button>
+            <button class="tab" data-tab="invoices">Faturas <span class="count-badge" id="count-invoices">0</span></button>
+            <button class="tab" data-tab="requests">Requisições</button>
+            <button class="tab" data-tab="settings">Configurações</button>
+          </div>
+
+          <!-- Subcontas -->
+          <div id="panel-accounts" class="tab-panel active">
+            <div class="panel-actions">
+              <button id="refresh-accounts">Atualizar</button>
+              <input id="new-account-name" placeholder="Nome da subconta" />
+              <button id="create-account">Criar subconta</button>
+              <span id="status-accounts" class="status-line"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>Conta</th><th>Nome</th><th>KYC</th><th>Recebe</th><th>Saldo</th><th>Domicílio</th><th>Faturas</th><th>Criada</th></tr></thead>
+                <tbody id="accounts-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Faturas -->
+          <div id="panel-invoices" class="tab-panel">
+            <div class="panel-actions">
+              <button id="refresh-invoices">Atualizar</button>
+              <select id="filter-account"><option value="">Todas as contas</option></select>
+              <select id="filter-status">
+                <option value="">Todos os status</option>
+                <option>pending</option><option>paid</option><option>in_analysis</option><option>canceled</option>
+                <option>expired</option><option>refunded</option><option>partially_refunded</option>
+                <option>chargeback</option><option>in_protest</option><option>externally_paid</option>
+              </select>
+              <input id="filter-q" placeholder="ID, order_id, e-mail, pagador" />
+              <span id="status-invoices" class="status-line"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>Fatura (transaction_id)</th><th>Conta</th><th>Status</th><th>Meio</th><th>Total</th><th>Pagador</th><th>Split</th><th>Avisos</th><th>Criada</th></tr></thead>
+                <tbody id="invoices-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Requisições -->
+          <div id="panel-requests" class="tab-panel">
+            <div class="panel-actions">
+              <button id="refresh-requests">Atualizar</button>
+              <select id="filter-channel">
+                <option value="">Todos os canais</option>
+                <option value="direct">API direta</option>
+                <option value="proxy">sec-proxy</option>
+                <option value="webhook">Webhooks enviados</option>
+              </select>
+              <button id="clear-requests" class="danger">Limpar</button>
+              <span id="count-requests" class="count-badge">0</span>
+            </div>
+            <div id="requests-list"></div>
+          </div>
+
+          <!-- Configurações -->
+          <div id="panel-settings" class="tab-panel">
+            <div class="settings-grid" id="settings-form">
+              <label for="s-cardScenario">Cenário do cartão</label>
+              <select id="s-cardScenario"></select>
+              <div class="hint" id="card-hint"></div>
+
+              <label for="s-verificationOutcome">Resultado do KYC</label>
+              <select id="s-verificationOutcome">
+                <option value="manual">Manual (pelo painel)</option>
+                <option value="accepted">Aprovar em 3s</option>
+                <option value="rejected">Rejeitar em 3s</option>
+              </select>
+
+              <label for="s-autoPaySeconds">Pagar Pix/boleto após (s)</label>
+              <input type="number" id="s-autoPaySeconds" min="0" />
+              <div class="hint">0 = só pagando pelo painel ou pela página da fatura.</div>
+
+              <label for="s-autoWebhooks">Enviar webhooks</label>
+              <input type="checkbox" id="s-autoWebhooks" />
+
+              <label for="s-webhookUrl">URL dos webhooks</label>
+              <input type="text" id="s-webhookUrl" />
+
+              <label for="s-strict">Modo estrito (regras da doc)</label>
+              <input type="checkbox" id="s-strict" />
+              <div class="hint">Recusa o que a doc proíbe e hoje passamos: price_range fora do enum, sem address_proof, due_date com hora, phone em E.164, api_type minúsculo, reembolso sem saldo, conta emissora no split. Desligado, só registra aviso.</div>
+
+              <label for="s-lenientAuth">Token desconhecido = conta mestre</label>
+              <input type="checkbox" id="s-lenientAuth" />
+
+              <label for="s-fault-route">Falha simulada (rota)</label>
+              <select id="s-fault-route"><option value="">Nenhuma</option><option value="*">Todas</option></select>
+
+              <label for="s-fault-kind">Tipo da falha</label>
+              <select id="s-fault-kind"></select>
+
+              <label for="s-fault-remaining">Próximas N chamadas</label>
+              <input type="number" id="s-fault-remaining" min="1" value="1" />
+
+              <label for="s-fault-channel">Canal da falha</label>
+              <select id="s-fault-channel">
+                <option value="any">Direta e proxy</option><option value="direct">Só API direta</option><option value="proxy">Só sec-proxy</option>
+              </select>
+
+              <span></span>
+              <div class="panel-actions" style="margin:0">
+                <button id="save-settings" class="primary">Salvar</button>
+                <button id="reset-data" class="danger">Apagar todos os dados do mock</button>
+                <span id="status-settings" class="status-line"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="detail-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2 id="detail-title">Detalhe</h2>
+          <button class="modal-close" id="detail-close" title="Fechar">&times;</button>
+        </div>
+        <div class="modal-actions" id="detail-actions"></div>
+        <div class="modal-tabs" id="detail-tabs"></div>
+        <div class="modal-body" id="detail-body"></div>
+      </div>
+    </div>
+
+    <script src="/gateway-mocks-iugu.js?v=1"></script>
+    <script src="/tab-badge.js?v=1"></script>
+  </body>
+</html>

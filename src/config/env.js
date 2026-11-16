@@ -121,3 +121,16 @@ export const IDWALL_MOCK = {
   webhookToken: process.env.IDWALL_MOCK_WEBHOOK_TOKEN?.trim() || '',
   webhookTimeoutMs: Number(process.env.IDWALL_MOCK_WEBHOOK_TIMEOUT_MS || 20000),
 };
+
+// Iugu mock (Iugu tab). scripts/iugu-mock-patch.sh points greenn-back and gateway at /iugu (direct API)
+// and /iugu-proxy (sec-proxy protocol); invoice webhooks go to the gateway postback.
+export const IUGU_MOCK = {
+  publicUrl: (process.env.IUGU_MOCK_PUBLIC_URL?.trim() || 'http://localhost:8115').replace(/\/$/, ''),
+  webhookUrl: process.env.IUGU_MOCK_WEBHOOK_URL?.trim() || 'http://gateway-nginx/api/postback?integration=iugu',
+  // Must match IUGU_SEC_PROXY_GREENN_TOKEN, which the patch sets to this same default.
+  proxyGreennToken: process.env.IUGU_MOCK_PROXY_GREENN_TOKEN?.trim() || 'iugu-mock-greenn-token',
+  // Same as IUGU_ACCOUNT_ID / IUGU_API_EXTERNAL_ID of the local .env.dev files.
+  masterAccountId: process.env.IUGU_MOCK_MASTER_ACCOUNT_ID?.trim() || 'B116E97A7F22458382600058A9B9CA5D',
+  envelopeSecret: process.env.IUGU_MOCK_ENVELOPE_SECRET?.trim() || 'iugu-mock-envelope-secret',
+  webhookTimeoutMs: Number(process.env.IUGU_MOCK_WEBHOOK_TIMEOUT_MS || 20000),
+};

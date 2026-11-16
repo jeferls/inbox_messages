@@ -77,3 +77,26 @@ make idwall-mock-on
 make idwall-mock-off
 make idwall-mock-status
 ```
+
+Mock da Iugu no greenn-back e na gateway (patch local, não commitar). Painel em http://localhost:8115/gateway-mocks-iugu.html:
+
+```sh
+make iugu-mock-on                     # rebuild do inbox + patch + config:clear + workers da Iugu reiniciados
+make iugu-mock-proxy-on SELLER=123    # seller no caminho do sec-proxy (user flag IUGU_SEC_PROXY)
+make iugu-mock-proxy-off SELLER=123   # seller de volta ao caminho legado (API direta)
+make iugu-mock-status
+make iugu-mock-off
+```
+
+| Caminho | URL no mock | Quem usa |
+|---|---|---|
+| API direta | `http://svc-inbox_messages/iugu/v1/` | `IuguHelper` e comandos do greenn-back, `IuguService` legado da gateway |
+| sec-proxy | `http://svc-inbox_messages/iugu-proxy` (+ `/iugu/v1/...`), `x-greenn-token: iugu-mock-greenn-token` | `IuguSecProxyProvider` do greenn-back e da gateway, com a flag `IUGU_SEC_PROXY` |
+| Webhooks | `POST http://gateway-nginx/api/postback?integration=iugu` (form-urlencoded) | `WebhookController` da gateway |
+
+- IDs no formato da Iugu (32 hex maiúsculos) para conta, fatura (`transaction_id`), cliente, forma de pagamento e token.
+- Cartão: o final do número decide o resultado (`0002` negado, `0051` saldo insuficiente, `0010` em análise...; o resto aprova). Dá para fixar um cenário na aba Configurações ou por request com o header `X-Mock-Scenario`.
+- Pix e boleto ficam `pending` até pagar pelo painel, pela página da fatura (`secure_url`) ou após N segundos (configurável).
+- O proxy devolve tokens só como envelope `v1.<kid>.<payload>.<mac>`, recusa `null`, `[]` e campos fora da allowlist, e reconstrói os responses só com os campos que os clientes leem (por isso `refunded_at_iso`, `chargeback_at_iso` e `updated_at` não chegam por ele).
+- O modo estrito recusa o que a documentação da Iugu proíbe e o código hoje envia; desligado, só registra o aviso na requisição e na fatura.
+- O caminho do sec-proxy na gateway só existe em branches que têm `src/config/iugu_sec_proxy.php`; sem o arquivo o patch pula essa parte.

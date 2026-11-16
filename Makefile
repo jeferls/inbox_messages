@@ -1,4 +1,4 @@
-.PHONY: up down logs logs-claim rebuild clean-cache mobile mobile-all idwall-mock-on idwall-mock-off idwall-mock-status help
+.PHONY: up down logs logs-claim rebuild clean-cache mobile mobile-all idwall-mock-on idwall-mock-off idwall-mock-status iugu-mock-on iugu-mock-off iugu-mock-status iugu-mock-proxy-on iugu-mock-proxy-off help
 
 SERVICE_NAME := svc-inbox_messages
 CLAIM_SERVICE_NAME := svc-claim-page
@@ -24,6 +24,11 @@ help:
 	@echo "  make idwall-mock-on     # aponta o greenn-back local para o mock da IdWall (patch local, nao commitar)"
 	@echo "  make idwall-mock-off    # desfaz o patch da IdWall no greenn-back"
 	@echo "  make idwall-mock-status # mostra se o patch da IdWall esta aplicado"
+	@echo "  make iugu-mock-on       # aponta greenn-back e gateway para o mock da Iugu (API direta + sec-proxy; patch local, nao commitar)"
+	@echo "  make iugu-mock-off      # desfaz o patch da Iugu"
+	@echo "  make iugu-mock-status   # mostra o patch, a conectividade e os sellers no sec-proxy"
+	@echo "  make iugu-mock-proxy-on SELLER=<id>  # liga IUGU_SEC_PROXY para o seller (caminho do sec-proxy)"
+	@echo "  make iugu-mock-proxy-off SELLER=<id> # volta o seller para o caminho legado (API direta)"
 
 up:
 	@echo ">> Garantindo rede $(NETWORK)"
@@ -87,3 +92,19 @@ idwall-mock-off:
 
 idwall-mock-status:
 	@scripts/idwall-mock-patch.sh status
+
+# Builds the inbox first: the image copies src/, so a stale container answers 404 on /iugu.
+iugu-mock-on: up
+	@scripts/iugu-mock-patch.sh on
+
+iugu-mock-off:
+	@scripts/iugu-mock-patch.sh off
+
+iugu-mock-status:
+	@scripts/iugu-mock-patch.sh status
+
+iugu-mock-proxy-on:
+	@scripts/iugu-mock-patch.sh proxy-on $(SELLER)
+
+iugu-mock-proxy-off:
+	@scripts/iugu-mock-patch.sh proxy-off $(SELLER)
